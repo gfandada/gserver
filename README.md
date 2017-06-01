@@ -1,3 +1,2 @@
 # gserver
-game server base on message
-by golang
+game server by golang
