@@ -1,0 +1,8 @@
+package gserver
+
+const version = "0.1.0"
+
+/***
+	v0.1.0实现的特性：
+	gateway包：封装了tcp网关的操作
+**/
