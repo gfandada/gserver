@@ -19,6 +19,8 @@ type Gate struct {
 // tcp服务器
 var tcpServer *network.TcpServer
 
+/***************************实现imodule接口*******************************/
+
 // 启动tcp网关
 func (gate *Gate) Run(chClose chan bool) {
 	fmt.Println("启动一个tcp网关")
