@@ -3,15 +3,17 @@ package network
 
 import (
 	"fmt" // FIXME 第一个debug版本不使用持久化的日志方案
+	"lib/util"
 	"net"
 )
 
 type TcpServer struct {
-	ServerAddress  string         // 服务器对外暴露的地址：localhost:9527
-	MaxConnNum     int            // 最大的连接数
-	ServerListener net.Listener   // 服务器的监听器
-	PendingNum     int            // 允许的最大的客户端缓冲队列长度
-	MsgParser      *MessageParser // 消息解析器
+	ServerAddress  string             // 服务器对外暴露的地址：localhost:9527
+	MaxConnNum     int                // 最大的连接数
+	ServerListener net.Listener       // 服务器的监听器
+	PendingNum     int                // 允许的最大的客户端缓冲队列长度
+	MsgParser      *MessageParser     // 消息解析器
+	Agent          func(*Conn) Iagent // 客户端代理
 }
 
 // tcpserver启动入口
@@ -49,6 +51,7 @@ func (server *TcpServer) init() {
 
 // 处理客户端的连接
 func (server *TcpServer) run() {
+	fmt.Println("tcp server pid:", util.GetPid())
 	for {
 		fmt.Println("loop accept")
 		conn, err := server.ServerListener.Accept()
@@ -63,8 +66,18 @@ func (server *TcpServer) run() {
 			continue
 		}
 		// 初始化客户端conn
-		InitConn(conn, server.PendingNum, server.MsgParser)
-		// TODO agent携程
+		tcpConn := InitConn(conn, server.PendingNum, server.MsgParser)
+		agent := server.Agent(tcpConn)
+		go func() {
+			fmt.Println("启动一个代理携程循环执行run:", util.GetPid())
+			// 循环反序列化并路由消息
+			agent.Run()
+			conn.Close()
+			// 更新连接池
+			server.DeleteConn(conn)
+			// agent的清理工作
+			agent.OnClose()
+		}()
 	}
 }
 

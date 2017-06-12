@@ -1,0 +1,10 @@
+syntax = "proto2";
+package protomsg;
+
+// 登录消息
+message login
+{
+   required int32     id = 1;   // 自定义用户id
+   required string    str = 2;  // 自定义用户消息
+   optional int32     opt = 3;  // optional field
+}

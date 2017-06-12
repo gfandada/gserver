@@ -19,13 +19,13 @@ type Conn struct {
 
 // 初始化客户端conn
 func InitConn(conn net.Conn, pendingNum int, msgParser *MessageParser) *Conn {
-	fmt.Println("初始化客户端conn123")
 	tcpConn := new(Conn)
 	tcpConn.Conn = conn
 	tcpConn.ChanSend = make(chan []byte, pendingNum)
 	tcpConn.MsgParser = msgParser
 	tcpConn.Online = true
 	go func() {
+		fmt.Println("循环从chanSend读取msg，发送至client--sta")
 		for sendData := range tcpConn.ChanSend {
 			if sendData == nil {
 				break
@@ -36,6 +36,7 @@ func InitConn(conn net.Conn, pendingNum int, msgParser *MessageParser) *Conn {
 				break
 			}
 		}
+		fmt.Println("循环从chanSend读取msg，发送至client--end")
 		conn.Close()
 	}()
 	return tcpConn

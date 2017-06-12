@@ -2,11 +2,14 @@
 package network
 
 import (
+	"encoding/binary"
 	"errors"
 	"fmt"
-	"gserver/app/protobuf/proto"
+	"lib/chanrpc"
 	"math"
 	"reflect"
+
+	"github.com/golang/protobuf/proto"
 )
 
 // 处理器的数据结构
@@ -58,7 +61,7 @@ func (processor *Processor) Register(msg proto.Message) uint16 {
 		fmt.Println("protobuf message pointer required")
 	}
 	// 检查是否已经被系统注册的消息
-	if _, ok := processor.msgID[msgType]; ok {
+	if _, ok := processor.MsgId[msgType]; ok {
 		fmt.Printf("message %s is already registered\n", msgType)
 	}
 	// 检查消息长度
@@ -71,7 +74,7 @@ func (processor *Processor) Register(msg proto.Message) uint16 {
 	// 在消息体容器中增加这些消息
 	processor.MsgInfo = append(processor.MsgInfo, message)
 	// 返回从0开始的id给接口调用者
-	id := unit16(len(processor.MsgInfo) - 1)
+	id := uint16(len(processor.MsgInfo) - 1)
 	// 在id容器中增加这些id标识
 	processor.MsgId[msgType] = id
 	return id
@@ -82,7 +85,8 @@ func (processor *Processor) Register(msg proto.Message) uint16 {
 func (processor *Processor) SetRouter(msg proto.Message, msgRouter *chanrpc.Server) {
 	msgType := reflect.TypeOf(msg)
 	// 检查消息是否被注册
-	if id, ok := processor.MsgId[msgType]; !ok {
+	id, ok := processor.MsgId[msgType]
+	if !ok {
 		fmt.Printf("SetRouter message %s not registered", msgType)
 		return
 	}
@@ -91,10 +95,11 @@ func (processor *Processor) SetRouter(msg proto.Message, msgRouter *chanrpc.Serv
 
 // 设置消息处理器
 // FIXME 在routing和序列化、反序列化的过程中禁止调用此方案
-func (processor *Processor) SetHandler(msg proto.Message, msgHandler MsgHandler) {
+func (processor *Processor) SetHandler(msg proto.Message, msgHandler MessageHandler) {
 	msgType := reflect.TypeOf(msg)
 	// 检查消息是否被注册
-	if id, ok := processor.MsgId[msgType]; !ok {
+	id, ok := processor.MsgId[msgType]
+	if !ok {
 		fmt.Printf("SetHandler message %s not registered", msgType)
 		return
 	}
@@ -103,7 +108,7 @@ func (processor *Processor) SetHandler(msg proto.Message, msgHandler MsgHandler)
 
 // 设置真实消息体的处理器
 // FIXME 在routing和序列化、反序列化的过程中禁止调用此方案
-func (processor *Processor) SetRawHandler(id uint16, msgRawHandler MsgHandler) {
+func (processor *Processor) SetRawHandler(id uint16, msgRawHandler MessageHandler) {
 	if id >= uint16(len(processor.MsgInfo)) {
 		fmt.Printf("message id %v not registered", id)
 	}
@@ -124,7 +129,8 @@ func (processor *Processor) Serialize(msg interface{}) ([][]byte, error) {
 	// 反射消息的类型
 	msgType := reflect.TypeOf(msg)
 	// 检查消息是否被注册了
-	if id, ok := processor.MsgId[msgType]; !ok {
+	id, ok := processor.MsgId[msgType]
+	if !ok {
 		err := fmt.Errorf("message %s not registered", msgType)
 		fmt.Printf("message %s not registered\n", msgType)
 		return nil, err
@@ -138,7 +144,7 @@ func (processor *Processor) Serialize(msg interface{}) ([][]byte, error) {
 	}
 	// 序列化消息体
 	data, err := proto.Marshal(msg.(proto.Message))
-	return [][]byte{id, data}, err
+	return [][]byte{rawId, data}, err
 }
 
 // 反序列化接口
@@ -160,7 +166,8 @@ func (processor *Processor) Deserialize(data []byte) (interface{}, error) {
 	}
 	// 反序列化消息体
 	// TODO
-	if info := processor.MsgInfo[id].MsgRawHandler; info != nil {
+	info := processor.MsgInfo[id]
+	if info.MsgRawHandler != nil {
 		return MsgRaw{id, data[2:]}, nil
 	} else {
 		msg := reflect.New(info.MsgType.Elem()).Interface()
@@ -173,8 +180,8 @@ func (processor *Processor) Route(msg interface{}, userData interface{}) error {
 	// 必要的检查
 	if msgRaw, ok := msg.(MsgRaw); ok {
 		if msgRaw.MsgId >= uint16(len(processor.MsgInfo)) {
-			err := fmt.Errorf("message id %v not registered", id)
-			fmt.Printf("Route message id %v not registered\n", id)
+			err := fmt.Errorf("message msg %v not registered", msg)
+			fmt.Printf("Route message msg %v not registered\n", msg)
 			return err
 		}
 		info := processor.MsgInfo[msgRaw.MsgId]
@@ -185,7 +192,8 @@ func (processor *Processor) Route(msg interface{}, userData interface{}) error {
 	}
 	// protobuf
 	msgType := reflect.TypeOf(msg)
-	if id, ok := processor.MsgId[msgType]; !ok {
+	id, ok := processor.MsgId[msgType]
+	if !ok {
 		return fmt.Errorf("message %s not registered", msgType)
 	}
 	info := processor.MsgInfo[id]

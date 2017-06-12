@@ -4,10 +4,17 @@ package network
 import (
 	"encoding/binary"
 	"errors"
-	"fmt"
 	"io"
 	"math"
 )
+
+/*
+	在网络中传输的消息格式
+	----------------------
+	| len | id | message |
+	----------------------
+	其中len默认为两个字节，len和id默认使用网络字节序
+*/
 
 // 解析器维护的数据结构
 // FIXME 程序会自动校正异常数据
@@ -21,7 +28,6 @@ type MessageParser struct {
 // 构建一个消息解析器
 // FIXME 本版本不开放此配置
 func NewMessageParser() *MessageParser {
-	fmt.Println("构建一个消息解析器")
 	newMsg := new(MessageParser)
 	newMsg.MessageLen = 2
 	newMsg.MinMessageLen = 1

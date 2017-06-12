@@ -14,13 +14,11 @@ var connMapMux sync.Mutex
 
 // 初始化
 func Init() {
-	fmt.Println("初始化tcp_pool")
 	connPool = make(ConnMap)
 }
 
 // 关闭
 func Close() {
-	fmt.Println("关闭tcp_pool")
 	connMapMux.Lock()
 	defer connMapMux.Unlock()
 	for conn := range connPool {
@@ -31,7 +29,6 @@ func Close() {
 
 // 添加一个新的连接
 func (server *TcpServer) AddConn(conn net.Conn, maxNum int) bool {
-	fmt.Println("添加一个新的连接至tcp_pool")
 	connMapMux.Lock()
 	defer connMapMux.Unlock()
 	// 检查是否达到连接池上线
@@ -41,4 +38,11 @@ func (server *TcpServer) AddConn(conn net.Conn, maxNum int) bool {
 	}
 	connPool[conn] = struct{}{}
 	return true
+}
+
+// 删除一个失效的连接
+func (server *TcpServer) DeleteConn(conn net.Conn) {
+	connMapMux.Lock()
+	defer connMapMux.Unlock()
+	delete(connPool, conn)
 }

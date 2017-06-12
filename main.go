@@ -1,8 +1,8 @@
 package main
 
 import (
-	"gserver/src/gateway"
-	"gserver/src/lib/module"
+	"gateway"
+	"lib/module"
 )
 
 func main() {
