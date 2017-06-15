@@ -90,7 +90,6 @@ func (agent *agent) Run() {
 			fmt.Println("msg route err:", err)
 			break
 		}
-
 	}
 }
 
