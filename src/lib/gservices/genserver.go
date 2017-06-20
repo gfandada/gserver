@@ -1,9 +1,10 @@
-// 封装了本地rpc，支持异步同步调用
-package rpc
+// 封装了本地genserver，支持异步同步调用
+package gservices
 
 import (
 	"errors"
 	"fmt"
+	"sync"
 	"time"
 )
 
@@ -23,6 +24,7 @@ type OutputMessage struct {
 
 // server是一个容器，同时也负责执行handle，将结果发送给client
 type LocalServer struct {
+	mutex          sync.Mutex
 	Functions      map[interface{}]interface{} // map[msg]msg_handler主要用于一些检查:server不需要处理一些无效的msg
 	MessageBoxChan chan *InputMessage          // 消息队列
 	Pending        int                         // 用于记录当前排队的消息数量
@@ -50,9 +52,11 @@ func (server *LocalServer) Start() {
 		for {
 			select {
 			case inputMessage := <-server.MessageBoxChan:
+				// 未注册的消息直接丢弃
 				if server.Check(inputMessage) {
 					server.Exec(inputMessage)
 				}
+				server.Pending--
 			}
 		}
 	}()
@@ -82,10 +86,13 @@ func (server *LocalServer) CloseByGrace() {
 
 // 向server中注册一对值
 func (server *LocalServer) Register(msg interface{}, msgHandler interface{}) error {
+	server.mutex.Lock()
+	defer server.mutex.Unlock()
 	if _, ok := server.Functions[msg]; ok {
 		return errors.New("multiple registration")
 	}
 	server.Functions[msg] = msgHandler
+	server.Pending++
 	return nil
 }
 

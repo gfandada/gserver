@@ -1,4 +1,4 @@
-package rpc
+package gservices
 
 import (
 	"testing"
@@ -30,7 +30,7 @@ func Test_localrpc(t *testing.T) {
 		F:          add,
 		Args:       args,
 		OutputChan: ret,
-	}, 2)
+	}, 5)
 	if err != nil {
 		t.Error(err)
 	} else if outMessage.Ret != 30 {
@@ -46,10 +46,10 @@ func Test_localrpc(t *testing.T) {
 		F:          add,
 		Args:       args,
 		OutputChan: ret,
-	}, 2)
+	}, 5)
 	if err1 != nil {
 		t.Error(err1)
-	} else if outMessage1.Ret != 70 {
+	} else if outMessage1.Ret != 90 {
 		t.Error("should 90")
 	}
 }
