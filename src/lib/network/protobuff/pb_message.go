@@ -83,7 +83,6 @@ func (msgManager *MsgManager) Deserialize(data []byte) (*RawMessage, error) {
 	} else {
 		id = binary.BigEndian.Uint16(data)
 	}
-	fmt.Println(id, msgManager.MsgMap[id])
 	if info, ok := msgManager.MsgMap[id]; ok {
 		msg := reflect.New(info.MsgType.Elem()).Interface()
 		err := proto.Unmarshal(data[2:], msg.(proto.Message))
