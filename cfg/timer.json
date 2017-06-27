@@ -1,0 +1,20 @@
+{
+    "daily": [{
+		"sec" : 1,
+		"min" : 2,
+		"hour": 3
+	}],
+	"weekly": [{
+		"sec" : 2,
+		"min" : 3,
+		"hour": 4,
+		"week": 6
+	}],
+	"monthly": [{
+	    "sec" : 10,
+		"min" : 11,
+		"hour": 12,
+		"day" : 4,
+		"month":5
+	}]
+}

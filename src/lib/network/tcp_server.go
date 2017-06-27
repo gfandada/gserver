@@ -5,37 +5,39 @@ import (
 	"fmt" // FIXME 第一个debug版本不使用持久化的日志方案
 	"lib/util"
 	"net"
+	"sync"
 )
 
 type TcpServer struct {
 	ServerAddress  string             // 服务器对外暴露的地址：localhost:9527
 	MaxConnNum     int                // 最大的连接数
 	ServerListener net.Listener       // 服务器的监听器
-	PendingNum     int                // 允许的最大的客户端缓冲队列长度
+	PendingNum     int                // 最大发送队列长度（server -> client）
 	MsgParser      *MessageParser     // 消息解析器
 	Agent          func(*Conn) Iagent // 客户端代理
+	MutexWG        sync.WaitGroup
 }
 
 // tcpserver启动入口
 func (server *TcpServer) Start() {
-	server.init()
+	if ok := server.init(); !ok {
+		fmt.Println("tcp server start failed")
+		return
+	}
 	go server.run()
 }
 
 // 服务器初始化
-func (server *TcpServer) init() {
-	// 必要的检查
+func (server *TcpServer) init() bool {
 	if server == nil {
 		fmt.Println("init server is nil")
-		return
+		return false
 	}
-	// 创建服务器监听器
 	listener, err := net.Listen("tcp", server.ServerAddress)
 	if err != nil {
 		fmt.Println("net.Listen error:", err.Error())
-		return
+		return false
 	}
-	// 必要的检查
 	if server.MaxConnNum <= 0 {
 		server.MaxConnNum = 100
 		fmt.Println("server.MaxConnNum <= 0, defalut 100")
@@ -46,7 +48,9 @@ func (server *TcpServer) init() {
 	}
 	server.ServerListener = listener
 	server.MsgParser = NewMessageParser()
+	server.MsgParser.SetMsgLen(2, 1024*5, 1)
 	Init()
+	return true
 }
 
 // 处理客户端的连接
@@ -61,21 +65,18 @@ func (server *TcpServer) run() {
 			server.Close()
 			return
 		}
-		// 更新连接池
 		if ok := server.AddConn(conn, server.MaxConnNum); !ok {
 			continue
 		}
-		// 初始化客户端conn
 		tcpConn := InitConn(conn, server.PendingNum, server.MsgParser)
 		agent := server.Agent(tcpConn)
 		go func() {
-			fmt.Println("启动一个代理携程循环执行run:", util.GetPid())
-			// 循环反序列化并路由消息
+			server.MutexWG.Add(1)
+			defer server.MutexWG.Done()
+			fmt.Println("启动一个代理携程循环执行代理:", util.GetPid())
 			agent.Run()
 			conn.Close()
-			// 更新连接池
 			server.DeleteConn(conn)
-			// agent的清理工作
 			agent.OnClose()
 		}()
 	}
@@ -83,8 +84,7 @@ func (server *TcpServer) run() {
 
 // 优雅的关闭
 func (server *TcpServer) Close() {
-	// 不再接受连接
 	server.ServerListener.Close()
-	// 关闭已有的连接
 	Close()
+	server.MutexWG.Wait()
 }

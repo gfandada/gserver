@@ -33,7 +33,6 @@ func Run(mods ...Imodule) {
 
 // 注册模块
 func register(iMod Imodule) {
-	fmt.Println("注册模块，", iMod)
 	mod := new(module)
 	mod.Moduler = iMod
 	// FIXME 开始时chan是空的

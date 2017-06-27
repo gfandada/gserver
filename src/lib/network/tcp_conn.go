@@ -3,6 +3,7 @@ package network
 
 import (
 	"fmt"
+	"lib/util"
 	"net"
 	"sync"
 )
@@ -25,7 +26,7 @@ func InitConn(conn net.Conn, pendingNum int, msgParser *MessageParser) *Conn {
 	tcpConn.MsgParser = msgParser
 	tcpConn.Online = true
 	go func() {
-		fmt.Println("循环从chanSend读取msg，发送至client--sta")
+		fmt.Println("启动一个代理携程循环发送消息:", util.GetPid())
 		for sendData := range tcpConn.ChanSend {
 			if sendData == nil {
 				break
@@ -36,7 +37,6 @@ func InitConn(conn net.Conn, pendingNum int, msgParser *MessageParser) *Conn {
 				break
 			}
 		}
-		fmt.Println("循环从chanSend读取msg，发送至client--end")
 		conn.Close()
 	}()
 	return tcpConn

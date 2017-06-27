@@ -4,12 +4,12 @@ import (
 	"net"
 )
 
-type Agent interface {
+type Igateway interface {
 	WriteMsg(msg interface{})
 	LocalAddr() net.Addr
 	RemoteAddr() net.Addr
 	Close()
 	Destroy()
-	UserData() interface{}
+	GetUserData() interface{}
 	SetUserData(data interface{})
 }

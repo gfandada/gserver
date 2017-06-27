@@ -9,7 +9,8 @@ It is generated from these files:
 	login.proto
 
 It has these top-level messages:
-	Login
+	LoginReq
+	LoginAck
 */
 package protomsg
 
@@ -22,50 +23,61 @@ var _ = proto.Marshal
 var _ = fmt.Errorf
 var _ = math.Inf
 
-// 登录消息
-type Login struct {
+// 登录请求
+type LoginReq struct {
 	Id               *int32  `protobuf:"varint,1,req,name=id" json:"id,omitempty"`
 	Str              *string `protobuf:"bytes,2,req,name=str" json:"str,omitempty"`
-	Opt              *int32  `protobuf:"varint,3,opt,name=opt" json:"opt,omitempty"`
 	XXX_unrecognized []byte  `json:"-"`
 }
 
-func (m *Login) Reset()                    { *m = Login{} }
-func (m *Login) String() string            { return proto.CompactTextString(m) }
-func (*Login) ProtoMessage()               {}
-func (*Login) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{0} }
+func (m *LoginReq) Reset()                    { *m = LoginReq{} }
+func (m *LoginReq) String() string            { return proto.CompactTextString(m) }
+func (*LoginReq) ProtoMessage()               {}
+func (*LoginReq) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{0} }
 
-func (m *Login) GetId() int32 {
+func (m *LoginReq) GetId() int32 {
 	if m != nil && m.Id != nil {
 		return *m.Id
 	}
 	return 0
 }
 
-func (m *Login) GetStr() string {
+func (m *LoginReq) GetStr() string {
 	if m != nil && m.Str != nil {
 		return *m.Str
 	}
 	return ""
 }
 
-func (m *Login) GetOpt() int32 {
-	if m != nil && m.Opt != nil {
-		return *m.Opt
+// 登录返回
+type LoginAck struct {
+	Str              *string `protobuf:"bytes,1,req,name=str" json:"str,omitempty"`
+	XXX_unrecognized []byte  `json:"-"`
+}
+
+func (m *LoginAck) Reset()                    { *m = LoginAck{} }
+func (m *LoginAck) String() string            { return proto.CompactTextString(m) }
+func (*LoginAck) ProtoMessage()               {}
+func (*LoginAck) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{1} }
+
+func (m *LoginAck) GetStr() string {
+	if m != nil && m.Str != nil {
+		return *m.Str
 	}
-	return 0
+	return ""
 }
 
 func init() {
-	proto.RegisterType((*Login)(nil), "protomsg.login")
+	proto.RegisterType((*LoginReq)(nil), "protomsg.login_req")
+	proto.RegisterType((*LoginAck)(nil), "protomsg.login_ack")
 }
 
 var fileDescriptor0 = []byte{
-	// 92 bytes of a gzipped FileDescriptorProto
+	// 95 bytes of a gzipped FileDescriptorProto
 	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x09, 0x6e, 0x88, 0x02, 0xff, 0xe2, 0xe2, 0xce, 0xc9, 0x4f, 0xcf,
-	0xcc, 0xd3, 0x2b, 0x28, 0xca, 0x2f, 0xc9, 0x17, 0xe2, 0x00, 0x53, 0xb9, 0xc5, 0xe9, 0x4a, 0xd6,
-	0x5c, 0xac, 0x60, 0x09, 0x21, 0x3e, 0x2e, 0xa6, 0xcc, 0x14, 0x09, 0x46, 0x05, 0x26, 0x0d, 0xd6,
-	0x20, 0x20, 0x4b, 0x48, 0x80, 0x8b, 0xb9, 0xb8, 0xa4, 0x48, 0x82, 0x09, 0x28, 0xc0, 0x19, 0x04,
-	0x62, 0x82, 0x44, 0xf2, 0x0b, 0x4a, 0x24, 0x98, 0x15, 0x18, 0x81, 0x4a, 0x40, 0x4c, 0x40, 0x00,
-	0x00, 0x00, 0xff, 0xff, 0xd8, 0xae, 0x14, 0x1a, 0x54, 0x00, 0x00, 0x00,
+	0xcc, 0xd3, 0x2b, 0x28, 0xca, 0x2f, 0xc9, 0x17, 0xe2, 0x00, 0x53, 0xb9, 0xc5, 0xe9, 0x4a, 0xba,
+	0x5c, 0x9c, 0x60, 0x89, 0xf8, 0xa2, 0xd4, 0x42, 0x21, 0x3e, 0x2e, 0xa6, 0xcc, 0x14, 0x09, 0x46,
+	0x05, 0x26, 0x0d, 0xd6, 0x20, 0x20, 0x4b, 0x48, 0x80, 0x8b, 0xb9, 0xb8, 0xa4, 0x48, 0x82, 0x09,
+	0x28, 0xc0, 0x19, 0x04, 0x62, 0x2a, 0xc9, 0xc2, 0x94, 0x27, 0x26, 0x67, 0xc3, 0xa4, 0x19, 0xe1,
+	0xd2, 0x80, 0x00, 0x00, 0x00, 0xff, 0xff, 0x9e, 0xe4, 0x51, 0x0f, 0x65, 0x00, 0x00, 0x00,
 }

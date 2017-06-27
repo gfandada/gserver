@@ -38,6 +38,10 @@ type LocalClient struct {
 	//	PendingSync    int          // 同步调用时的队列长度
 }
 
+type MessageHandler1 func([]interface{})
+type MessageHandler2 func([]interface{}) interface{}
+type MessageHandler3 func([]interface{}) []interface{}
+
 // 新建一个rpcserver
 func NewLocalServer(length int) *LocalServer {
 	server := new(LocalServer)
@@ -52,6 +56,10 @@ func (server *LocalServer) Start() {
 		for {
 			select {
 			case inputMessage := <-server.MessageBoxChan:
+				if inputMessage == nil {
+					server.Pending--
+					break
+				}
 				// 未注册的消息直接丢弃
 				if server.Check(inputMessage) {
 					server.Exec(inputMessage)
@@ -105,16 +113,16 @@ func (server *LocalServer) Exec(input *InputMessage) {
 		}
 	}()
 	switch input.F.(type) {
-	case func([]interface{}):
-		input.F.(func([]interface{}))(input.Args)
+	case MessageHandler1:
+		input.F.(MessageHandler1)(input.Args)
 		server.ret(input, &OutputMessage{})
 		return
-	case func([]interface{}) interface{}:
-		ret := input.F.(func([]interface{}) interface{})(input.Args)
+	case MessageHandler2:
+		ret := input.F.(MessageHandler2)(input.Args)
 		server.ret(input, &OutputMessage{Ret: ret})
 		return
-	case func([]interface{}) []interface{}:
-		ret := input.F.(func([]interface{}) []interface{})(input.Args)
+	case MessageHandler3:
+		ret := input.F.(MessageHandler3)(input.Args)
 		server.ret(input, &OutputMessage{Ret: ret})
 		return
 	}
@@ -131,7 +139,9 @@ func (server *LocalServer) Check(input *InputMessage) bool {
 
 // 将结果写进chan
 func (server *LocalServer) ret(input *InputMessage, output *OutputMessage) {
-	input.OutputChan <- output
+	if input.OutputChan != nil {
+		input.OutputChan <- output
+	}
 }
 
 // 新建一个rpcclient

@@ -1,8 +1,7 @@
 // 定义了agent接口
-// 主要用于代理用户套接字操作
 package network
 
 type Iagent interface {
-	Run()     // 启动一个代理
-	OnClose() // 关闭一个代理
+	Run()     // 启动一个代理，执行相应的逻辑
+	OnClose() // 关闭一个代理，清理资源
 }
