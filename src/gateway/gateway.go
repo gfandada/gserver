@@ -1,5 +1,4 @@
-// 封装了tcp网关的操作
-// 其实是实现了接口imodule
+// 封装了网关的操作
 package gateway
 
 import (
