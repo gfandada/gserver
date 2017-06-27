@@ -149,25 +149,30 @@ func (agent *Agent) LocalAddr() net.Addr {
 	}
 	return nil
 }
+
 func (agent *Agent) RemoteAddr() net.Addr {
 	if agent.Conn != nil {
 		return agent.Conn.RemoteAddr()
 	}
 	return nil
 }
+
 func (agent *Agent) Close() {
 	if agent.Conn != nil {
 		agent.Conn.Close()
 	}
 }
+
 func (agent *Agent) Destroy() {
 	if agent.Conn != nil {
 		agent.Conn.Destroy()
 	}
 }
+
 func (agent *Agent) GetUserData() interface{} {
 	return agent.UserData
 }
+
 func (agent *Agent) SetUserData(data interface{}) {
 
 }
