@@ -1,4 +1,5 @@
 *exe
 pkg/*
-src/github.com*
+src/github.com
 src/golang.org
+src/gopkg.in
