@@ -13,6 +13,7 @@ const version = "0.1.1"
 	v0.1.1实现的特性：
 	network包：支持websocket协议，引入pb作为数据序列化方案
 	gservices包：封装了通用服务模型genserver，类似erlang:gen_server
+	支持基于消息的插件式开发
 **/
 
 /***
