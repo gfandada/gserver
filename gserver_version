@@ -1,0 +1,15 @@
+package gserver
+
+const version = "0.1.1"
+
+/***
+	v0.1.0实现的特性：
+	gateway包：封装了tcp网关的操作
+**/
+
+/***
+	v0.1.1实现的特性：
+	gateway包：新增对websocket网关的支持
+	测试tcp、websocket下的通信模型
+**/
+

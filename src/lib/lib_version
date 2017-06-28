@@ -1,0 +1,26 @@
+// 用于记录lib库的变更历史
+package lib
+
+const version = "0.1.1"
+
+/***
+	v0.1.0实现的特性：
+	network包：封装了底层tcpserver的创建，连接池管理，用户会话管理，数据编码处理
+	module包：封装了底层模块的注册，初始化，运行以及销毁，是插件化开发的前提
+**/
+
+/***
+	v0.1.1实现的特性：
+	network包：支持websocket协议，引入pb作为数据序列化方案
+	gservices包：封装了通用服务模型genserver，类似erlang:gen_server
+	支持基于消息的插件式开发
+**/
+
+/***
+	v0.1.2将要实现的特性：
+	gservices包：封装gentimer，genevent
+	util包：引入唯一id
+	network: 整理会话池
+	loader: 配置装载器
+**/
+
