@@ -22,5 +22,6 @@ const version = "0.1.1"
 	util包：引入唯一id
 	network: 整理会话池 - FIXED
 	loader: 配置装载器
+	整理目录结构，引入glog - FIXED
 **/
 
