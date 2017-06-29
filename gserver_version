@@ -1,5 +1,5 @@
-// 用于记录lib库的变更历史
-package lib
+// 用于记录gserver库的变更历史
+package gserver
 
 const version = "0.1.1"
 
