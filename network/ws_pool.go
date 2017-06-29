@@ -2,6 +2,8 @@
 package network
 
 import (
+	"fmt"
+	"lib/logger"
 	"sync"
 
 	"github.com/gorilla/websocket"
@@ -33,6 +35,7 @@ func AddWsConn(conn *websocket.Conn, maxNum int) bool {
 	defer wsconnMapMux.Unlock()
 	// 检查是否达到连接池上线
 	if wsconnPool == nil || len(wsconnPool) >= maxNum {
+		logger.Warning(fmt.Sprintf("The number of connections has reached the upper limit, %d", maxNum))
 		return false
 	}
 	wsconnPool[conn] = struct{}{}

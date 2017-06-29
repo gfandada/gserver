@@ -3,8 +3,8 @@ package network
 
 import (
 	"fmt"
+	"lib/logger"
 	"lib/network/protobuff"
-	"lib/util"
 	"net"
 	"time"
 )
@@ -13,7 +13,7 @@ import (
 type Gate struct {
 	MaxConnNum       int      // 允许的最大的连接数
 	PendingNum       int      // 最大发送队列长度（server -> client）
-	MaxMsgLen        int      // 允许的最大的消息长度
+	MaxMsgLen        int      // 允许的服务器接收的最大的消息长度
 	MessageProcessor Imessage // 用于消息体的处理
 
 	ServerAddress string // tcp服务地址
@@ -56,7 +56,7 @@ func (gate *Gate) Run(chClose chan bool) {
 // 初始化
 func (gate *Gate) OnInit() {
 	if gate == nil {
-		fmt.Println("tcp_gateway run failed, because gate is nil")
+		logger.Error("tcp_gateway run failed, because gate is nil")
 		return
 	}
 	switch {
@@ -66,7 +66,6 @@ func (gate *Gate) OnInit() {
 		tcpServer.MaxConnNum = gate.MaxConnNum
 		tcpServer.PendingNum = gate.PendingNum
 		tcpServer.Agent = func(conn *Conn) Iagent {
-			fmt.Println("NewAgent:", util.GetPid())
 			arg := &Agent{Conn: conn, Gate: gate}
 			return arg
 		}
@@ -88,14 +87,14 @@ func (gate *Gate) OnInit() {
 
 // 资源回收
 func (gate *Gate) OnDestroy() {
-	fmt.Println("网关销毁中")
+	logger.Error(fmt.Sprintf("gateway OnDestroy, %v", gate))
 }
 
 /****************************实现了Iagent接口**********************************/
 
 func (agent *Agent) Run() {
 	if agent.Gate == nil {
-		fmt.Println("Run params is nil")
+		logger.Error(fmt.Sprintf("agent Run params is nil, %v", agent))
 		return
 	}
 	for {
@@ -109,12 +108,12 @@ func (agent *Agent) Run() {
 			// 反序列化
 			realMsg, errs := agent.Gate.MessageProcessor.Deserialize(msg)
 			if errs != nil {
-				fmt.Println(errs)
+				logger.Error(fmt.Sprintf("Deserialize err:%v", errs))
 				break
 			}
 			// 消息路由
 			if err := agent.Gate.MessageProcessor.Router(realMsg, agent); err != nil {
-				fmt.Println("msg route err:", err)
+				logger.Error(fmt.Sprintf("msg route err:%v", errs))
 				break
 			}
 		}
@@ -122,7 +121,7 @@ func (agent *Agent) Run() {
 }
 
 func (agent *Agent) OnClose() {
-	fmt.Println("代理被销毁")
+	logger.Info(fmt.Sprintf("agent OnClose:%v", agent))
 }
 
 /****************************实现了Igateway接口**********************************/
@@ -136,7 +135,7 @@ func (agent *Agent) WriteMsg(msg protobuff.RawMessage) {
 		}
 		err = agent.Conn.WriteMsg(data...)
 		if err != nil {
-			fmt.Printf("write message %v error: %v \n", msg.MsgId, err)
+			logger.Error(fmt.Sprintf("write message %v error: %v", msg.MsgId, err))
 		}
 	}
 }
@@ -175,6 +174,9 @@ func (agent *Agent) SetUserData(data interface{}) {
 
 }
 
+/******************************实现了Iack接口*********************************/
+
+// TODO 需要优化
 func (agent *Agent) Ack(data []interface{}) {
 	if data == nil {
 		return
@@ -189,5 +191,6 @@ func (agent *Agent) Ack(data []interface{}) {
 		agent.WriteMsg(data[0].(protobuff.RawMessage))
 		// 更新session
 		OptSession(data[1].(uint32), data[2].(int), data[3].([]SessionData))
+		return
 	}
 }

@@ -3,6 +3,7 @@ package network
 import (
 	"crypto/tls"
 	"fmt"
+	"lib/logger"
 	"net"
 	"net/http"
 	"sync"
@@ -14,7 +15,7 @@ import (
 type WsServer struct {
 	ServerAddress  string               // 服务器对外暴露的地址：localhost:9527
 	MaxConnNum     int                  // 最大的连接数
-	MaxMsgLen      int                  // 单消息的最大长度
+	MaxMsgLen      int                  // client单消息的最大长度
 	ServerListener net.Listener         // 服务器的监听器
 	PendingNum     int                  // 允许的最大的客户端连接的缓冲队列长度
 	Agent          func(*WsConn) Iagent // 客户端代理
@@ -40,15 +41,18 @@ type WsHandler struct {
 func (handler *WsHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	if r.Method != "GET" {
 		http.Error(w, "Method not allowed", 405)
+		logger.Error(fmt.Sprintf("Method not allowed, %s", r.Method))
 		return
 	}
 	// 升级http->websocket
 	conn, err := handler.Upgrader.Upgrade(w, r, nil)
 	if err != nil {
-		fmt.Printf("upgrade error: %v", err)
+		logger.Error(fmt.Sprintf("upgrade error, %v", err))
 		return
 	}
 	conn.SetReadLimit(int64(handler.MaxMsgLen))
+	//	conn.SetReadDeadline(time.Now().Add(pongWait))
+	//	conn.SetPongHandler(func(string) error { ws.SetReadDeadline(time.Now().Add(pongWait)); return nil })
 	handler.MutexWG.Add(1)
 	defer handler.MutexWG.Done()
 	if ok := AddWsConn(conn, handler.MaxConnNum); !ok {
@@ -67,7 +71,7 @@ func (handler *WsHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 func (server *WsServer) Start() {
 	listener := server.init()
 	if listener == nil {
-		fmt.Println("http server start failed")
+		logger.Error(fmt.Sprintf("http server start failed, %v"))
 		return
 	}
 	go server.run(listener)
@@ -77,20 +81,24 @@ func (server *WsServer) Start() {
 func (server *WsServer) init() net.Listener {
 	listener, err := net.Listen("tcp", server.ServerAddress)
 	if err != nil {
-		fmt.Printf("%v", err)
+		logger.Error(fmt.Sprintf("net.Listen error: %v", err))
 		return nil
 	}
 	if server.MaxConnNum <= 0 {
 		server.MaxConnNum = 100
+		logger.Warning(fmt.Sprintf("server.MaxConnNum <= 0, defalut 100"))
 	}
 	if server.PendingNum <= 0 {
 		server.PendingNum = 100
+		logger.Warning(fmt.Sprintf("server.PendingNum <= 0, defalut 100"))
 	}
 	if server.MaxMsgLen <= 0 {
-		server.MaxMsgLen = 4096
+		server.MaxMsgLen = 1024
+		logger.Warning(fmt.Sprintf("server.MaxMsgLen <= 0, defalut 1024"))
 	}
 	if server.HTTPTimeout <= 0 {
 		server.HTTPTimeout = 10 * time.Second
+		logger.Warning(fmt.Sprintf("server.HTTPTimeout <= 0, defalut 10s"))
 	}
 	if server.Agent == nil {
 		return nil
@@ -104,7 +112,7 @@ func (server *WsServer) init() net.Listener {
 		config.Certificates = make([]tls.Certificate, 1)
 		config.Certificates[0], err = tls.LoadX509KeyPair(server.CertFile, server.KeyFile)
 		if err != nil {
-			fmt.Printf("%v", err)
+			logger.Warning(fmt.Sprintf("wss error: %v", err))
 		}
 		listener = tls.NewListener(listener, config)
 	}
@@ -120,7 +128,6 @@ func (server *WsServer) init() net.Listener {
 		},
 	}
 	server.MsgParser = NewMessageParser()
-	// TODO
 	server.MsgParser.SetMsgLen(2, uint32(server.MaxMsgLen), 1)
 	server.Handler.MsgParser = server.MsgParser
 	InitWsPool()

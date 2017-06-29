@@ -4,6 +4,7 @@ package gservices
 import (
 	"errors"
 	"fmt"
+	"lib/logger"
 	"sync"
 	"time"
 )
@@ -112,9 +113,8 @@ func (server *LocalServer) Register(msg interface{}, msgHandler interface{}) err
 func (server *LocalServer) Exec(input *InputMessage) {
 	defer func() {
 		if r := recover(); r != nil {
-			err := fmt.Errorf("%v", r)
-			fmt.Println(err)
-			server.ret(input, &OutputMessage{Err: err})
+			logger.Error(fmt.Sprintf("genserver Exec panic error，%v:", r))
+			server.ret(input, &OutputMessage{Err: fmt.Errorf("%v", r)})
 		}
 	}()
 	switch input.F.(type) {

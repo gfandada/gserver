@@ -2,8 +2,8 @@
 package network
 
 import (
-	"fmt" // FIXME 第一个debug版本不使用持久化的日志方案
-	"lib/util"
+	"fmt"
+	"lib/logger"
 	"net"
 	"sync"
 )
@@ -21,7 +21,7 @@ type TcpServer struct {
 // tcpserver启动入口
 func (server *TcpServer) Start() {
 	if ok := server.init(); !ok {
-		fmt.Println("tcp server start failed")
+		logger.Error(fmt.Sprintf("tcp server start failed, %v", server))
 		return
 	}
 	go server.run()
@@ -30,25 +30,24 @@ func (server *TcpServer) Start() {
 // 服务器初始化
 func (server *TcpServer) init() bool {
 	if server == nil {
-		fmt.Println("init server is nil")
+		logger.Error(fmt.Sprintf("tcp server init server is nil, %v", server))
 		return false
 	}
 	listener, err := net.Listen("tcp", server.ServerAddress)
 	if err != nil {
-		fmt.Println("net.Listen error:", err.Error())
+		logger.Error(fmt.Sprintf("net.Listen error: %v", err))
 		return false
 	}
 	if server.MaxConnNum <= 0 {
 		server.MaxConnNum = 100
-		fmt.Println("server.MaxConnNum <= 0, defalut 100")
+		logger.Warning(fmt.Sprintf("server.MaxConnNum <= 0, defalut 100"))
 	}
 	if server.PendingNum <= 0 {
 		server.PendingNum = 100
-		fmt.Println("server.PendingNum <= 0, defalut 100")
+		logger.Warning(fmt.Sprintf("server.PendingNum <= 0, defalut 100"))
 	}
 	server.ServerListener = listener
 	server.MsgParser = NewMessageParser()
-	// TODO
 	server.MsgParser.SetMsgLen(2, 1024*5, 1)
 	Init()
 	NewSessionMap()
@@ -57,13 +56,11 @@ func (server *TcpServer) init() bool {
 
 // 处理客户端的连接
 func (server *TcpServer) run() {
-	fmt.Println("tcp server pid:", util.GetPid())
 	for {
-		fmt.Println("loop accept")
 		conn, err := server.ServerListener.Accept()
 		// FIXME 这里需要对不同的错误情况不同处理，本版本暂时直接关闭
 		if err != nil {
-			fmt.Println("server.ServerListener.Accept error:", err.Error())
+			logger.Error(fmt.Sprintf("server.ServerListener.Accept :%v", err))
 			server.Close()
 			return
 		}
@@ -75,7 +72,6 @@ func (server *TcpServer) run() {
 		go func() {
 			server.MutexWG.Add(1)
 			defer server.MutexWG.Done()
-			fmt.Println("启动一个代理携程循环执行代理:", util.GetPid())
 			agent.Run()
 			conn.Close()
 			server.DeleteConn(conn)

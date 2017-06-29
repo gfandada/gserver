@@ -20,7 +20,7 @@ const version = "0.1.1"
 	v0.1.2将要实现的特性：
 	gservices包：封装gentimer，genevent
 	util包：引入唯一id
-	network: 整理会话池
+	network: 整理会话池 - FIXED
 	loader: 配置装载器
 **/
 

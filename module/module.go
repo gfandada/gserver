@@ -3,6 +3,7 @@ package module
 
 import (
 	"fmt"
+	"lib/logger"
 	"os"
 	"os/signal"
 	"sync"
@@ -27,7 +28,7 @@ func Run(mods ...Imodule) {
 	chanSig := make(chan os.Signal, 1)
 	signal.Notify(chanSig, os.Interrupt, os.Kill)
 	sig := <-chanSig
-	fmt.Printf("收到kill信号，%v\n", sig)
+	logger.Error(fmt.Sprintf("recv kill %v", sig))
 	destroy()
 }
 
@@ -35,7 +36,6 @@ func Run(mods ...Imodule) {
 func register(iMod Imodule) {
 	mod := new(module)
 	mod.Moduler = iMod
-	// FIXME 开始时chan是空的
 	mod.ChanClose = make(chan bool, 1)
 	mods = append(mods, mod)
 }
@@ -45,12 +45,10 @@ func destroy() {
 	for i := len(mods) - 1; i >= 0; i-- {
 		mod := mods[i]
 		mod.ChanClose <- true
-		// 等待所有的WaitGroup数量变成0
 		mod.WaitSync.Wait()
-		// 捕获panic
 		defer func() {
 			if r := recover(); r != nil {
-				fmt.Println("panic error")
+				logger.Error(fmt.Sprintf("destroy module panic error，%v", r))
 			}
 		}()
 		mod.Moduler.OnDestroy()

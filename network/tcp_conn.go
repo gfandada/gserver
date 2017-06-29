@@ -2,8 +2,6 @@
 package network
 
 import (
-	"fmt"
-	"lib/util"
 	"net"
 	"sync"
 )
@@ -26,7 +24,6 @@ func InitConn(conn net.Conn, pendingNum int, msgParser *MessageParser) *Conn {
 	tcpConn.MsgParser = msgParser
 	tcpConn.Online = true
 	go func() {
-		fmt.Println("启动一个代理携程循环发送消息:", util.GetPid())
 		for sendData := range tcpConn.ChanSend {
 			if sendData == nil {
 				break
@@ -40,26 +37,6 @@ func InitConn(conn net.Conn, pendingNum int, msgParser *MessageParser) *Conn {
 		conn.Close()
 	}()
 	return tcpConn
-}
-
-/****************************实现了iagent接口******************************/
-
-func (conn *Conn) Run() {
-	for {
-		// 解析消息
-		_, err := conn.ReadMsg()
-		// 严格的消息限制
-		if err != nil {
-			break
-		}
-		// TODO
-		// 1 反序列化消息
-		// 2 消息路由
-	}
-}
-
-func (conn *Conn) OnClose() {
-
 }
 
 /****************************实现io标准的read******************************/

@@ -4,7 +4,9 @@ package network
 import (
 	"encoding/binary"
 	"errors"
+	"fmt"
 	"io"
+	"lib/logger"
 	"math"
 )
 
@@ -25,7 +27,6 @@ type MessageParser struct {
 }
 
 // 构建一个消息解析器
-// FIXME 本版本不开放此配置
 func NewMessageParser() *MessageParser {
 	newMsg := new(MessageParser)
 	newMsg.MessageLen = 2
@@ -63,6 +64,7 @@ func (msgParser *MessageParser) SetMsgLen(MessageLen int, MaxMessageLen uint32, 
 	if msgParser.MaxMessageLen > max {
 		msgParser.MaxMessageLen = max
 	}
+	logger.Info(fmt.Sprintf("set msgParser: %v", msgParser))
 }
 
 // tcp读取消息

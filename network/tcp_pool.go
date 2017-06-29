@@ -3,6 +3,7 @@ package network
 
 import (
 	"fmt"
+	"lib/logger"
 	"net"
 	"sync"
 )
@@ -33,7 +34,7 @@ func (server *TcpServer) AddConn(conn net.Conn, maxNum int) bool {
 	defer connMapMux.Unlock()
 	// 检查是否达到连接池上线
 	if len(connPool) >= maxNum {
-		fmt.Println("connPool >= maxNum")
+		logger.Warning(fmt.Sprintf("The number of connections has reached the upper limit, %d", maxNum))
 		return false
 	}
 	connPool[conn] = struct{}{}
