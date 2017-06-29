@@ -6,8 +6,9 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"lib/logger"
 	"math"
+
+	"github.com/gfandada/gserver/logger"
 )
 
 /*

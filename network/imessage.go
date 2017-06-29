@@ -2,7 +2,7 @@
 package network
 
 import (
-	"lib/network/protobuff"
+	"github.com/gfandada/gserver/network/protobuff"
 )
 
 type Imessage interface {

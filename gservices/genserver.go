@@ -4,9 +4,10 @@ package gservices
 import (
 	"errors"
 	"fmt"
-	"lib/logger"
 	"sync"
 	"time"
+
+	"github.com/gfandada/gserver/logger"
 )
 
 // 客户端发送的message

@@ -3,10 +3,11 @@ package module
 
 import (
 	"fmt"
-	"lib/logger"
 	"os"
 	"os/signal"
 	"sync"
+
+	"github.com/gfandada/gserver/logger"
 )
 
 // 每个模块的详情

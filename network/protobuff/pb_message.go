@@ -4,9 +4,10 @@ import (
 	"encoding/binary"
 	"errors"
 	"fmt"
-	"lib/gservices"
 	"math"
 	"reflect"
+
+	"github.com/gfandada/gserver/gservices"
 
 	"github.com/golang/protobuf/proto"
 )

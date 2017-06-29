@@ -3,8 +3,9 @@ package network
 
 import (
 	"fmt"
-	"lib/logger"
 	"sync"
+
+	"github.com/gfandada/gserver/logger"
 
 	"github.com/gorilla/websocket"
 )

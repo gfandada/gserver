@@ -3,10 +3,11 @@ package network
 
 import (
 	"fmt"
-	"lib/logger"
-	"lib/network/protobuff"
 	"net"
 	"time"
+
+	"github.com/gfandada/gserver/logger"
+	"github.com/gfandada/gserver/network/protobuff"
 )
 
 // 定义网关结构体

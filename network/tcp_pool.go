@@ -3,9 +3,10 @@ package network
 
 import (
 	"fmt"
-	"lib/logger"
 	"net"
 	"sync"
+
+	"github.com/gfandada/gserver/logger"
 )
 
 type ConnMap map[net.Conn]struct{}

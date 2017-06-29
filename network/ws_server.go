@@ -3,11 +3,12 @@ package network
 import (
 	"crypto/tls"
 	"fmt"
-	"lib/logger"
 	"net"
 	"net/http"
 	"sync"
 	"time"
+
+	"github.com/gfandada/gserver/logger"
 
 	"github.com/gorilla/websocket"
 )

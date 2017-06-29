@@ -3,7 +3,7 @@
 package loader
 
 import (
-	"lib/util"
+	"github.com/gfandada/gserver/util"
 
 	"github.com/koding/multiconfig"
 )
