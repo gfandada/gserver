@@ -1,6 +1,6 @@
 # gserver
 ```
-gen tcp/websocket server base on message
+    gen tcp/websocket server base on message
 ```
 ### Installation
 ```
@@ -10,4 +10,4 @@ gen tcp/websocket server base on message
     go get github.com/koding/multiconfig
 ```
 ### dataflow
-![image](https://github.com/gfandada/gserver/blob/master/png/dataflow.png)
+    ![image](https://github.com/gfandada/gserver/blob/master/png/dataflow.png)
