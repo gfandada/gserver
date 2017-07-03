@@ -10,14 +10,12 @@ import (
 	"github.com/gfandada/gserver/logger"
 )
 
-// 每个模块的详情
 type module struct {
-	Moduler   Imodule        // 模块实现的接口
-	ChanClose chan bool      // 模块是否关闭的通道
-	WaitSync  sync.WaitGroup // 保证子携程能执行完
+	Moduler   Imodule   // 模块实现的接口
+	ChanClose chan bool // 模块是否关闭的通道
+	WaitSync  sync.WaitGroup
 }
 
-// 使用切片作为模块的容器
 var mods []*module
 
 // 运行模块

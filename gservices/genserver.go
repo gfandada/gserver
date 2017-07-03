@@ -10,30 +10,26 @@ import (
 	"github.com/gfandada/gserver/logger"
 )
 
-// 客户端发送的message
 type InputMessage struct {
-	Msg        interface{}         // FIXME 消息标识（暂时不预留内部消息）
+	Msg        interface{}         // 消息标识（暂时不预留内部消息）
 	F          interface{}         // 消息handler
 	CB         Iack                // 消息回调
 	Args       []interface{}       // 函数调用参数
 	OutputChan chan *OutputMessage // 接收返回值的队列（长度为1）
 }
 
-// 服务器返回的message
 type OutputMessage struct {
-	Err error         // 错误描述
-	Ret []interface{} // 返回值
+	Err error
+	Ret []interface{}
 }
 
-// server是一个容器，同时也负责执行handle，将结果发送给client
 type LocalServer struct {
 	mutex          sync.Mutex
-	Functions      map[interface{}]interface{} // map[msg]msg_handler主要用于一些检查:server不需要处理一些无效的msg
+	Functions      map[interface{}]interface{} // map[msg]msg_handler主要用于检查
 	MessageBoxChan chan *InputMessage          // 消息队列
 	Pending        int                         // 用于记录当前排队的消息数量
 }
 
-//
 type LocalClient struct {
 	Server *LocalServer // rpcserver
 	//	ChanOutputSync chan *Output // 同步执行的结果队列
@@ -48,7 +44,6 @@ type MessageHandler3 func([]interface{}) []interface{}
 type MessageHandlerRet1 []interface{}
 type MessageHandlerRet2 interface{}
 
-// 新建一个rpcserver
 func NewLocalServer(length int) *LocalServer {
 	server := new(LocalServer)
 	server.Functions = make(map[interface{}]interface{})
@@ -56,7 +51,6 @@ func NewLocalServer(length int) *LocalServer {
 	return server
 }
 
-// 运行server
 func (server *LocalServer) Start() {
 	go func() {
 		for {
@@ -66,7 +60,6 @@ func (server *LocalServer) Start() {
 					server.Pending--
 					break
 				}
-				// 未注册的消息直接丢弃
 				if server.Check(inputMessage) {
 					server.Exec(inputMessage)
 				}
@@ -79,7 +72,6 @@ func (server *LocalServer) Start() {
 // 强制关闭server
 // 不再处理剩余的所有消息
 func (server *LocalServer) CloseByForce() {
-	// 先关闭，防止新写入
 	close(server.MessageBoxChan)
 	for inputMessage := range server.MessageBoxChan {
 		server.ret(inputMessage, &OutputMessage{
@@ -91,14 +83,13 @@ func (server *LocalServer) CloseByForce() {
 // 优雅的关闭server
 // 会处理完之前剩余的消息
 func (server *LocalServer) CloseByGrace() {
-	// 先关闭，防止新写入
 	close(server.MessageBoxChan)
 	for inputMessage := range server.MessageBoxChan {
 		server.Exec(inputMessage)
 	}
 }
 
-// 向server中注册一对值
+// 先注册再使用
 func (server *LocalServer) Register(msg interface{}, msgHandler interface{}) error {
 	server.mutex.Lock()
 	defer server.mutex.Unlock()
@@ -110,7 +101,6 @@ func (server *LocalServer) Register(msg interface{}, msgHandler interface{}) err
 	return nil
 }
 
-// 执行方法体
 func (server *LocalServer) Exec(input *InputMessage) {
 	defer func() {
 		if r := recover(); r != nil {
@@ -135,7 +125,6 @@ func (server *LocalServer) Exec(input *InputMessage) {
 	panic("error call function")
 }
 
-// 执行cb
 func execCB(input *InputMessage, output *OutputMessage) {
 	if output.Ret == nil {
 		return
@@ -143,7 +132,6 @@ func execCB(input *InputMessage, output *OutputMessage) {
 	input.CB.Ack(output.Ret)
 }
 
-// 检查消息是否被注册
 func (server *LocalServer) Check(input *InputMessage) bool {
 	if _, ok := server.Functions[input.Msg]; !ok {
 		return false
@@ -151,7 +139,6 @@ func (server *LocalServer) Check(input *InputMessage) bool {
 	return true
 }
 
-// 将结果写进chan
 func (server *LocalServer) ret(input *InputMessage, output *OutputMessage) {
 	if input.OutputChan != nil {
 		input.OutputChan <- output
@@ -162,7 +149,6 @@ func (server *LocalServer) ret(input *InputMessage, output *OutputMessage) {
 	}
 }
 
-// 新建一个rpcclient
 func (server *LocalServer) NewLocalClient() *LocalClient {
 	client := new(LocalClient)
 	client.Server = server

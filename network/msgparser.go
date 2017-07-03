@@ -97,14 +97,12 @@ func (msgParser *MessageParser) Read(conn *Conn) ([]byte, error) {
 			msgLen = binary.BigEndian.Uint32(bufMsgLen)
 		}
 	}
-	// 检查长度
 	switch {
 	case msgLen > msgParser.MaxMessageLen:
 		return nil, errors.New("message too long")
 	case msgLen < msgParser.MinMessageLen:
 		return nil, errors.New("message too short")
 	}
-	// 这里才是真正获取消息体
 	msgData := make([]byte, msgLen)
 	if _, err := io.ReadFull(conn, msgData); err != nil {
 		return nil, err
@@ -120,7 +118,6 @@ func (msgParser *MessageParser) Write(conn *Conn, args ...[]byte) error {
 	for _, value := range args {
 		msgLen += uint32(len(value))
 	}
-	// 检查长度
 	switch {
 	case msgLen > msgParser.MaxMessageLen:
 		return errors.New("message too long")
@@ -183,7 +180,6 @@ func (msgParser *MessageParser) ReadWs(wsConn *WsConn) ([]byte, error) {
 			msgLen = binary.BigEndian.Uint32(bufMsgLen)
 		}
 	}
-	// 检查长度
 	switch {
 	case msgLen > msgParser.MaxMessageLen:
 		return nil, errors.New("message too long")
@@ -194,7 +190,6 @@ func (msgParser *MessageParser) ReadWs(wsConn *WsConn) ([]byte, error) {
 }
 
 // 写数据
-// 由于参数是数组的数组，所以要注意调用时，不能有携程正在改变参数
 func (msgParser *MessageParser) WriteWs(wsConn *WsConn, args ...[]byte) error {
 	// 获取数据长度
 	var msgLen uint32

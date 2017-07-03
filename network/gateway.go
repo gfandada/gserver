@@ -99,20 +99,17 @@ func (agent *Agent) Run() {
 		return
 	}
 	for {
-		// 读取消息
 		msg, err := agent.Conn.ReadMsg()
 		if err != nil {
 			fmt.Println(err)
 			break
 		}
 		if agent.Gate.MessageProcessor != nil {
-			// 反序列化
 			realMsg, errs := agent.Gate.MessageProcessor.Deserialize(msg)
 			if errs != nil {
 				logger.Error(fmt.Sprintf("Deserialize err:%v", errs))
 				break
 			}
-			// 消息路由
 			if err := agent.Gate.MessageProcessor.Router(realMsg, agent); err != nil {
 				logger.Error(fmt.Sprintf("msg route err:%v", errs))
 				break

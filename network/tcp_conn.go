@@ -8,9 +8,9 @@ import (
 
 // conn数据
 type Conn struct {
-	Conn      net.Conn       // 客户端的连接
-	ChanSend  chan []byte    // 用来保存服务器需要发送给客户端的数据
-	ChanRecv  chan []byte    // FIXME 用来保存接收到的客户端数据
+	Conn     net.Conn    // 客户端的连接
+	ChanSend chan []byte // 用来保存服务器需要发送给客户端的数据
+	//	ChanRecv  chan []byte    // 用来保存接收到的客户端数据
 	MsgParser *MessageParser // 消息解析器
 	ChanMut   sync.Mutex     // 保证ChanSend携程安全
 	Online    bool           // 是否在线的标记:true在线 false离线
@@ -28,7 +28,6 @@ func InitConn(conn net.Conn, pendingNum int, msgParser *MessageParser) *Conn {
 			if sendData == nil {
 				break
 			}
-			// 从chan中读出数据，发送给客户端conn
 			_, err := conn.Write(sendData)
 			if err != nil {
 				break
@@ -63,7 +62,6 @@ func (conn *Conn) doDestroy() {
 	conn.Conn.(*net.TCPConn).SetLinger(0)
 	conn.Conn.Close()
 	close(conn.ChanSend)
-	// 更新标记
 	if conn.Online {
 		conn.Online = false
 	}
