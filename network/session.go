@@ -27,7 +27,7 @@ func NewSessionMap() {
 	Session = make(SessionMap)
 }
 
-func OptSession(userId uint32, opt int, data []SessionData) {
+func OptSession(userId uint32, opt int, data []SessionData) []*SessionData {
 	sessionMapMux.Lock()
 	defer sessionMapMux.Unlock()
 	switch opt {
@@ -36,17 +36,28 @@ func OptSession(userId uint32, opt int, data []SessionData) {
 	case Delete:
 		deleteS(userId, data)
 	case Find:
-		findS(userId, data)
+		return findS(userId, data)
 	}
+	return nil
 }
 
 func findS(userId uint32, dataNew []SessionData) []*SessionData {
+	if dataNew == nil || len(dataNew) == 0 {
+		return nil
+	}
 	data, ok := Session[userId]
 	if !ok {
 		return nil
 	}
 	ret := make([]*SessionData, len(dataNew))
 	for index, value := range dataNew {
+		if _, ok := data[value.Key]; !ok {
+			ret[index] = &SessionData{
+				Key:   value.Key,
+				Value: nil,
+			}
+			continue
+		}
 		ret[index] = &SessionData{
 			Key:   value.Key,
 			Value: data[value.Key],
@@ -56,6 +67,9 @@ func findS(userId uint32, dataNew []SessionData) []*SessionData {
 }
 
 func updateS(userId uint32, dataNew []SessionData) {
+	if dataNew == nil || len(dataNew) == 0 {
+		return
+	}
 	data, ok := Session[userId]
 	if !ok {
 		mapData := make(map[string]interface{})
@@ -68,9 +82,13 @@ func updateS(userId uint32, dataNew []SessionData) {
 	for _, value := range dataNew {
 		data[value.Key] = value.Value
 	}
+	return
 }
 
 func deleteS(userId uint32, dataNew []SessionData) {
+	if dataNew == nil || len(dataNew) == 0 {
+		return
+	}
 	data, ok := Session[userId]
 	if !ok {
 		return
@@ -78,4 +96,5 @@ func deleteS(userId uint32, dataNew []SessionData) {
 	for _, value := range dataNew {
 		delete(data, value.Key)
 	}
+	return
 }
