@@ -6,7 +6,7 @@ import (
 )
 
 // 用户id-用户数据
-type SessionMap map[uint32]map[string]interface{}
+type SessionMap map[uint64]map[string]interface{}
 
 var Session SessionMap
 var sessionMapMux sync.Mutex
@@ -27,7 +27,7 @@ func NewSessionMap() {
 	Session = make(SessionMap)
 }
 
-func OptSession(userId uint32, opt int, data []SessionData) []*SessionData {
+func OptSession(userId uint64, opt int, data []SessionData) []*SessionData {
 	sessionMapMux.Lock()
 	defer sessionMapMux.Unlock()
 	switch opt {
@@ -41,7 +41,7 @@ func OptSession(userId uint32, opt int, data []SessionData) []*SessionData {
 	return nil
 }
 
-func findS(userId uint32, dataNew []SessionData) []*SessionData {
+func findS(userId uint64, dataNew []SessionData) []*SessionData {
 	if dataNew == nil || len(dataNew) == 0 {
 		return nil
 	}
@@ -66,7 +66,7 @@ func findS(userId uint32, dataNew []SessionData) []*SessionData {
 	return ret
 }
 
-func updateS(userId uint32, dataNew []SessionData) {
+func updateS(userId uint64, dataNew []SessionData) {
 	if dataNew == nil || len(dataNew) == 0 {
 		return
 	}
@@ -85,7 +85,7 @@ func updateS(userId uint32, dataNew []SessionData) {
 	return
 }
 
-func deleteS(userId uint32, dataNew []SessionData) {
+func deleteS(userId uint64, dataNew []SessionData) {
 	if dataNew == nil || len(dataNew) == 0 {
 		return
 	}

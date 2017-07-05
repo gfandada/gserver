@@ -188,7 +188,7 @@ func (agent *Agent) Ack(data []interface{}) {
 		// ack自己
 		agent.WriteMsg(data[0].(protobuff.RawMessage))
 		// 更新session
-		OptSession(data[1].(uint32), data[2].(int), data[3].([]SessionData))
+		OptSession(data[1].(uint64), data[2].(int), data[3].([]SessionData))
 		return
 	}
 }
