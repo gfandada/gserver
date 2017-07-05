@@ -23,21 +23,32 @@ type Pool struct {
 }
 ******/
 
-var pool *redis.Pool = NewDbPool()
+var pool *redis.Pool
 
-func NewDbPool() *redis.Pool {
-	return &redis.Pool{
-		MaxIdle:     8,
-		MaxActive:   32, // max number of connections
-		IdleTimeout: 240 * time.Second,
+type Redis struct {
+	MaxIdle            int
+	MaxActive          int
+	IdleTimeout        int
+	RedisServer        string
+	DialConnectTimeout int
+	DialReadTimeout    int
+	DialWriteTimeout   int
+	Auth               string
+}
+
+func NewDbPool(redisCfg Redis) {
+	pool = &redis.Pool{
+		MaxIdle:     redisCfg.MaxIdle,
+		MaxActive:   redisCfg.MaxActive,
+		IdleTimeout: time.Duration(redisCfg.IdleTimeout) * time.Second,
 		Dial: func() (redis.Conn, error) {
-			c, err := redis.Dial("tcp", "192.168.78.130:6379")
+			c, err := redis.Dial("tcp", redisCfg.RedisServer)
 			if err != nil {
 				panic(err.Error())
 			}
-			redis.DialConnectTimeout(time.Duration(3 * time.Second))
-			redis.DialReadTimeout(time.Duration(3 * time.Second))
-			redis.DialWriteTimeout(time.Duration(3 * time.Second))
+			redis.DialConnectTimeout(time.Duration(redisCfg.DialConnectTimeout) * time.Second)
+			redis.DialReadTimeout(time.Duration(redisCfg.DialReadTimeout) * time.Second)
+			redis.DialWriteTimeout(time.Duration(redisCfg.DialWriteTimeout) * time.Second)
 			//			if _, err := c.Do("AUTH", "123456"); err != nil {
 			//				c.Close()
 			//				return nil, err

@@ -17,6 +17,16 @@ import (
 //func Uint64(reply interface{}, err error) (uint64, error)
 
 func Test_db(t *testing.T) {
+	NewDbPool(Redis{
+		MaxIdle:            8,
+		MaxActive:          64,
+		IdleTimeout:        300,
+		RedisServer:        "192.168.78.130:6379",
+		DialConnectTimeout: 3,
+		DialReadTimeout:    3,
+		DialWriteTimeout:   3,
+		Auth:               "",
+	})
 	// set单值
 	_, err := Exec("SET", "email", "gfandada@gmail.com")
 	if err != nil {
