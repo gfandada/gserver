@@ -49,10 +49,12 @@ func NewDbPool(redisCfg Redis) {
 			redis.DialConnectTimeout(time.Duration(redisCfg.DialConnectTimeout) * time.Second)
 			redis.DialReadTimeout(time.Duration(redisCfg.DialReadTimeout) * time.Second)
 			redis.DialWriteTimeout(time.Duration(redisCfg.DialWriteTimeout) * time.Second)
-			//			if _, err := c.Do("AUTH", "123456"); err != nil {
-			//				c.Close()
-			//				return nil, err
-			//			}
+			if redisCfg.Auth != "" {
+				if _, err := c.Do("AUTH", redisCfg.Auth); err != nil {
+					c.Close()
+					return nil, err
+				}
+			}
 			return c, err
 		},
 	}
