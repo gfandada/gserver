@@ -13,7 +13,8 @@ type Session struct {
 	SessionId  string    // sessionId
 	CreateTime time.Time // session创建时间
 	UpdateTime time.Time // session最近一次更新时间
-	ExpireTime time.Time // session过期时间
+	ExpireTime time.Time // FIXME session过期时间：暂未使用
+	Agent      *Agent    // 连接会话
 	Data       Isession  // 支持存放部分业务数据
 }
 
@@ -50,6 +51,9 @@ func merge(newSession *Session, oldSession *Session) *Session {
 	} else {
 		session.ExpireTime = oldSession.ExpireTime
 	}
+	session.SessionId = oldSession.SessionId
+	session.Agent = oldSession.Agent
+	session.Data = newSession.Data
 	return session
 }
 
