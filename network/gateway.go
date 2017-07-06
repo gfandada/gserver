@@ -184,11 +184,11 @@ func (agent *Agent) Ack(data []interface{}) {
 		// ack自己
 		agent.WriteMsg(data[0].(protobuff.RawMessage))
 		return
-	case 4:
+	case 2:
 		// ack自己
 		agent.WriteMsg(data[0].(protobuff.RawMessage))
 		// 更新session
-		SetSession(data[2].(*Session))
+		SetSession(data[1].(*Session))
 		return
 	}
 }
