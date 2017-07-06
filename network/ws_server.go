@@ -132,7 +132,7 @@ func (server *WsServer) init() net.Listener {
 	server.MsgParser.SetMsgLen(2, uint32(server.MaxMsgLen), 1)
 	server.Handler.MsgParser = server.MsgParser
 	InitWsPool()
-	NewSessionMap()
+	//	NewSessionMap()
 	return listener
 }
 

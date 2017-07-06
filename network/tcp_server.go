@@ -51,7 +51,7 @@ func (server *TcpServer) init() bool {
 	server.MsgParser = NewMessageParser()
 	server.MsgParser.SetMsgLen(2, 1024*5, 1)
 	Init()
-	NewSessionMap()
+	//	NewSessionMap()
 	return true
 }
 
