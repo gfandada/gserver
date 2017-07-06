@@ -14,7 +14,7 @@ type Session struct {
 	CreateTime time.Time // session创建时间
 	UpdateTime time.Time // session最近一次更新时间
 	ExpireTime time.Time // session过期时间
-	data       Isession  // 支持存放部分业务数据
+	Data       Isession  // 支持存放部分业务数据
 }
 
 func SetSession(session *Session) error {
