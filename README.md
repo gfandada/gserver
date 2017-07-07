@@ -15,6 +15,7 @@ go get github.com/koding/multiconfig
 2.optimize conn pool
 3.optimize inner panic
 4.storage timer job base on gentimer
+5.romote rpc for cluster
 ```
 ### dataflow
 ![image](https://github.com/gfandada/gserver/blob/master/png/dataflow.png)
