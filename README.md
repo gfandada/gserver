@@ -14,6 +14,7 @@ go get github.com/koding/multiconfig
 1.optimize handler exec loop
 2.optimize conn pool
 3.optimize inner panic
+4.storage timer job base on gentimer
 ```
 ### dataflow
 ![image](https://github.com/gfandada/gserver/blob/master/png/dataflow.png)
