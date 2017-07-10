@@ -62,11 +62,13 @@ func (handler *WsHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 	wsConn := InitWsConn(conn, handler.PendingNum, handler.MsgParser)
 	agent := handler.Agent(wsConn)
-	fmt.Println("运行run")
+	// 代理器：接受、反序列化、路由消息
 	agent.Run()
-	fmt.Println("停止run")
+	// 关闭客户端连接
 	wsConn.Close()
+	// 清理conn池
 	DeleteConn(conn)
+	// 执行上层业务
 	agent.OnClose()
 }
 

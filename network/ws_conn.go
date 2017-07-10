@@ -1,7 +1,6 @@
 package network
 
 import (
-	"fmt"
 	"net"
 	"sync"
 
@@ -10,12 +9,11 @@ import (
 
 // WsConn数据
 type WsConn struct {
-	Conn     *websocket.Conn // 客户端的连接
-	ChanSend chan []byte     // 用来保存服务器需要发送给客户端的数据
-	//	ChanRecv  chan []byte     //  用来保存接收到的客户端数据
-	ChanMut   sync.Mutex     // 保证ChanSend携程安全
-	Online    bool           // 是否在线的标记:true在线 false离线
-	MsgParser *MessageParser // 消息解析器
+	Conn      *websocket.Conn // 客户端的连接
+	ChanSend  chan []byte     // 用来保存服务器需要发送给客户端的数据
+	ChanMut   sync.Mutex      // 保证ChanSend携程安全
+	Online    bool            // 是否在线的标记:true在线 false离线
+	MsgParser *MessageParser  // 消息解析器
 }
 
 // 初始化客户端conn
@@ -27,7 +25,6 @@ func InitWsConn(conn *websocket.Conn, pendingNum int, msgParser *MessageParser) 
 	wsConn.MsgParser = msgParser
 	go func() {
 		for sendData := range wsConn.ChanSend {
-			fmt.Println("================:", sendData)
 			if sendData == nil {
 				break
 			}
@@ -36,9 +33,7 @@ func InitWsConn(conn *websocket.Conn, pendingNum int, msgParser *MessageParser) 
 				break
 			}
 		}
-		fmt.Println("========Destroy=1=======")
 		wsConn.Destroy()
-		fmt.Println("========Destroy=2=======")
 	}()
 	return wsConn
 }
@@ -61,9 +56,7 @@ func (wsConn *WsConn) Write(b []byte) {
 		wsConn.doDestroy()
 		return
 	}
-	fmt.Println("--------Write---------", b)
 	wsConn.ChanSend <- b
-	fmt.Println("--------Write---------", b)
 }
 
 /****************************实现了iconn接口******************************/
@@ -93,9 +86,8 @@ func (wsConn *WsConn) Close() {
 	}
 	wsConn.ChanMut.Lock()
 	defer wsConn.ChanMut.Unlock()
-	fmt.Println("------wscon_close----------")
-	wsConn.Write(nil)
 	wsConn.Online = false
+	wsConn.ChanSend <- nil
 }
 
 func (wsConn *WsConn) Destroy() {

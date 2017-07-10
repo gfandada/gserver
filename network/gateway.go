@@ -101,7 +101,6 @@ func (agent *Agent) Run() {
 	for {
 		msg, err := agent.Conn.ReadMsg()
 		if err != nil {
-			fmt.Println("ReadMsg:", err)
 			break
 		}
 		if agent.Gate.MessageProcessor != nil {
@@ -120,7 +119,9 @@ func (agent *Agent) Run() {
 
 func (agent *Agent) OnClose() {
 	logger.Info(fmt.Sprintf("agent OnClose:%v", agent))
-	DeleteSessionConn(agent.UserData.(uint64))
+	if agent.UserData != nil {
+		DeleteSessionConn(agent.UserData.(uint64))
+	}
 }
 
 /****************************实现了Igateway接口**********************************/
@@ -129,7 +130,6 @@ func (agent *Agent) WriteMsg(msg protobuff.RawMessage) {
 	if agent.Gate.MessageProcessor != nil {
 		data, err := agent.Gate.MessageProcessor.Serialize(msg)
 		if err != nil {
-			fmt.Println(err)
 			return
 		}
 		err = agent.Conn.WriteMsg(data...)
