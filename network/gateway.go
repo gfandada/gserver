@@ -101,6 +101,7 @@ func (agent *Agent) Run() {
 	for {
 		msg, err := agent.Conn.ReadMsg()
 		if err != nil {
+			fmt.Println("ReadMsg:", err)
 			break
 		}
 		if agent.Gate.MessageProcessor != nil {

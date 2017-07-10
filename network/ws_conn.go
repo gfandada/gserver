@@ -1,6 +1,7 @@
 package network
 
 import (
+	"fmt"
 	"net"
 	"sync"
 
@@ -26,6 +27,7 @@ func InitWsConn(conn *websocket.Conn, pendingNum int, msgParser *MessageParser) 
 	wsConn.MsgParser = msgParser
 	go func() {
 		for sendData := range wsConn.ChanSend {
+			fmt.Println("================:", sendData)
 			if sendData == nil {
 				break
 			}
@@ -34,7 +36,9 @@ func InitWsConn(conn *websocket.Conn, pendingNum int, msgParser *MessageParser) 
 				break
 			}
 		}
-		wsConn.Close()
+		fmt.Println("========Destroy=1=======")
+		wsConn.Destroy()
+		fmt.Println("========Destroy=2=======")
 	}()
 	return wsConn
 }
@@ -57,7 +61,9 @@ func (wsConn *WsConn) Write(b []byte) {
 		wsConn.doDestroy()
 		return
 	}
+	fmt.Println("--------Write---------", b)
 	wsConn.ChanSend <- b
+	fmt.Println("--------Write---------", b)
 }
 
 /****************************实现了iconn接口******************************/
@@ -87,6 +93,7 @@ func (wsConn *WsConn) Close() {
 	}
 	wsConn.ChanMut.Lock()
 	defer wsConn.ChanMut.Unlock()
+	fmt.Println("------wscon_close----------")
 	wsConn.Write(nil)
 	wsConn.Online = false
 }

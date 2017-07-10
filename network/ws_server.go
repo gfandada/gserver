@@ -62,7 +62,9 @@ func (handler *WsHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 	wsConn := InitWsConn(conn, handler.PendingNum, handler.MsgParser)
 	agent := handler.Agent(wsConn)
+	fmt.Println("运行run")
 	agent.Run()
+	fmt.Println("停止run")
 	wsConn.Close()
 	DeleteConn(conn)
 	agent.OnClose()
