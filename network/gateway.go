@@ -101,7 +101,6 @@ func (agent *Agent) Run() {
 	for {
 		msg, err := agent.Conn.ReadMsg()
 		if err != nil {
-			fmt.Println(err)
 			break
 		}
 		if agent.Gate.MessageProcessor != nil {
@@ -120,6 +119,7 @@ func (agent *Agent) Run() {
 
 func (agent *Agent) OnClose() {
 	logger.Info(fmt.Sprintf("agent OnClose:%v", agent))
+	DeleteSessionConn(agent.UserData.(uint64))
 }
 
 /****************************实现了Igateway接口**********************************/
@@ -169,7 +169,7 @@ func (agent *Agent) GetUserData() interface{} {
 }
 
 func (agent *Agent) SetUserData(data interface{}) {
-
+	agent.UserData = data
 }
 
 /******************************实现了Iack接口*********************************/
@@ -189,6 +189,7 @@ func (agent *Agent) Ack(data []interface{}) {
 		agent.WriteMsg(data[0].(protobuff.RawMessage))
 		// 更新session
 		AddSessionConn(data[1].(uint64), data[2].(*Agent))
+		agent.SetUserData(data[1].(uint64))
 		return
 	}
 }

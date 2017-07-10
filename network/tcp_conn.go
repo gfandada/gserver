@@ -86,7 +86,7 @@ func (conn *Conn) RemoteAddr() net.Addr {
 }
 
 func (conn *Conn) Close() {
-
+	conn.doDestroy()
 }
 
 func (conn *Conn) Destroy() {
