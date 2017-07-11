@@ -28,7 +28,7 @@ const (
 )
 
 const (
-	INFINITE = 1 << 32
+	INFINITE = (1 << 32) * time.Second
 )
 
 type Cache struct {
