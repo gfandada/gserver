@@ -27,6 +27,10 @@ const (
 	IMAGEKEY = "GSERVERKEY"
 )
 
+const (
+	INFINITE = 1 << 32
+)
+
 type Cache struct {
 	pool *redis.Pool // 连接池
 	key  string      // 用于记录redis中所有的key
