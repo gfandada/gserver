@@ -13,18 +13,24 @@ func Start(path string) {
 	defer slog.Flush()
 }
 
-func Info(log string) {
-	slog.Info(log)
+func Debug(debug string, params ...interface{}) {
+	slog.Debugf(debug, params...)
 }
 
-func Warning(waring string) {
+func Info(info string, params ...interface{}) {
+	slog.Infof(info, params...)
+}
+
+func Warning(waring string, params ...interface{}) {
 	buf := make([]byte, 4096)
 	l := runtime.Stack(buf, false)
+	slog.Warnf(waring, params...)
 	slog.Warnf("%s:%s", waring, buf[:l])
 }
 
-func Error(errorStr string) {
+func Error(errorStr string, params ...interface{}) {
 	buf := make([]byte, 4096)
 	l := runtime.Stack(buf, false)
-	slog.Errorf("%s:%s", errorStr, buf[:l])
+	slog.Warnf(errorStr, params...)
+	slog.Warnf("%s:%s", errorStr, buf[:l])
 }

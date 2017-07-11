@@ -4,6 +4,7 @@ import (
 	"time"
 
 	"github.com/garyburd/redigo/redis"
+	"github.com/gfandada/gserver/logger"
 )
 
 /******
@@ -56,6 +57,7 @@ func NewRedis(redisCfg Redis) *Cache {
 	cache.initRedis(redisCfg)
 	conn := cache.pool.Get()
 	defer conn.Close()
+	logger.Info("redis init succeed: %v", redisCfg)
 	return cache
 }
 
