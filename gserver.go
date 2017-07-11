@@ -7,7 +7,6 @@ import (
 
 // 插件化运行模块
 func Run(mods ...module.Imodule) {
-	logger.Start()
 	module.Run(mods...)
 }
 
