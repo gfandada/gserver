@@ -31,14 +31,15 @@ type Ijob interface {
 }
 
 type Job struct {
-	Id           uint64        // 唯一id，由timerserver生成，用来区分同一时刻的不同事件
-	Times        uint64        // 允许执行的最大次数:0表示无数次
-	Count        uint64        // 表示已执行的次数
-	IntervalTime time.Duration // 间隔时间：支持ns
-	CreateTime   time.Time     // 创建时间
-	ActionTime   time.Time     // FIXME 计算得出的本次执行时间点，会有误差
-	JobHandler   func()        // 事件函数
-	MsgChan      chan Job      // 消息通道，执行时，控制器通过该通道向外部传递消息
+	Id           uint64          // 唯一id，由timerserver生成，用来区分同一时刻的不同事件
+	Times        uint64          // 允许执行的最大次数:0表示无数次
+	Count        uint64          // 表示已执行的次数
+	IntervalTime time.Duration   // 间隔时间：支持ns
+	CreateTime   time.Time       // 创建时间
+	ActionTime   time.Time       // FIXME 计算得出的本次执行时间点，会有误差
+	JobHandler   MessageHandler1 // 事件函数
+	Args         []interface{}   // 函数调用参数
+	MsgChan      chan Job        // 消息通道，执行时，控制器通过该通道向外部传递消息
 }
 
 func NewLocalTimerServer() *LocalTimerServer {
@@ -49,7 +50,6 @@ func NewLocalTimerServer() *LocalTimerServer {
 		ExitChan:   make(chan struct{}, 0),
 	}
 	server.start()
-	logger.Info("gentimer run")
 	return server
 }
 
@@ -57,9 +57,8 @@ func (server *LocalTimerServer) start() {
 	defalutJob := Job{
 		CreateTime:   time.Now(),
 		IntervalTime: time.Duration(math.MaxInt64),
-		JobHandler:   func() {},
 	}
-	server.addJob(time.Now(), defalutJob.IntervalTime, 1, defalutJob.JobHandler)
+	server.addJob(time.Now(), defalutJob.IntervalTime, 1, defalutJob.JobHandler, nil)
 	go server.schedule()
 	server.resume()
 }
@@ -126,17 +125,17 @@ func (server *LocalTimerServer) UpdateJobTimeout(job Ijob, timeout time.Duration
 }
 
 // 添加单次任务，适用于单次定时业务逻辑
-func (server *LocalTimerServer) AddJobWithInterval(timeout time.Duration, jobFunc func()) (Ijob, bool) {
+func (server *LocalTimerServer) AddJobWithInterval(timeout time.Duration, jobFunc MessageHandler1, args []interface{}) (Ijob, bool) {
 	if timeout.Nanoseconds() <= 0 {
 		return nil, false
 	}
 	server.pause()
 	defer server.resume()
-	return server.addJob(time.Now(), timeout, 1, jobFunc)
+	return server.addJob(time.Now(), timeout, 1, jobFunc, args)
 }
 
 // 添加单次任务，适用于特定时期的活动等类型的任务
-func (server *LocalTimerServer) AddJobWithDeadtime(deadtime time.Time, jobFunc func()) (Ijob, bool) {
+func (server *LocalTimerServer) AddJobWithDeadtime(deadtime time.Time, jobFunc MessageHandler1, args []interface{}) (Ijob, bool) {
 	now := time.Now()
 	timeout := deadtime.Sub(now)
 	if timeout.Nanoseconds() <= 0 {
@@ -144,17 +143,17 @@ func (server *LocalTimerServer) AddJobWithDeadtime(deadtime time.Time, jobFunc f
 	}
 	server.pause()
 	defer server.resume()
-	return server.addJob(now, timeout, 1, jobFunc)
+	return server.addJob(now, timeout, 1, jobFunc, args)
 }
 
 // 添加重复任务
-func (server *LocalTimerServer) AddJobRepeat(jobInterval time.Duration, times uint64, jobFunc func()) (Ijob, bool) {
+func (server *LocalTimerServer) AddJobRepeat(jobInterval time.Duration, times uint64, jobFunc MessageHandler1, args []interface{}) (Ijob, bool) {
 	if jobInterval.Nanoseconds() <= 0 {
 		return nil, false
 	}
 	server.pause()
 	defer server.resume()
-	return server.addJob(time.Now(), jobInterval, times, jobFunc)
+	return server.addJob(time.Now(), jobInterval, times, jobFunc, args)
 }
 
 // 移除指定的单项任务
@@ -220,7 +219,7 @@ func (server *LocalTimerServer) WaitJobs() uint {
 	return 0
 }
 
-func (server *LocalTimerServer) addJob(createTime time.Time, intervalTime time.Duration, jobTimes uint64, jobFunc func()) (job *Job, inserted bool) {
+func (server *LocalTimerServer) addJob(createTime time.Time, intervalTime time.Duration, jobTimes uint64, jobFunc MessageHandler1, args []interface{}) (job *Job, inserted bool) {
 	inserted = true
 	server.Id++
 	job = &Job{
@@ -231,6 +230,7 @@ func (server *LocalTimerServer) addJob(createTime time.Time, intervalTime time.D
 		IntervalTime: intervalTime,
 		MsgChan:      make(chan Job, 10),
 		JobHandler:   jobFunc,
+		Args:         args,
 	}
 	server.JobList.Insert(job)
 	return
@@ -304,7 +304,7 @@ func (job *Job) action() {
 			panic(err)
 		}
 	}()
-	job.JobHandler()
+	job.JobHandler(job.Args)
 }
 
 func (job *Job) ExecWithGo(isGo bool) {
