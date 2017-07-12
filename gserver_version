@@ -25,5 +25,6 @@ const version = "0.1.1"
 	loader: 配置装载器 - FIXED
 	整理目录结构，引入glog - FIXED
 	支持redis - FIXED
+	去掉glog，引入seelog - FIXED
 **/
 
