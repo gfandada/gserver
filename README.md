@@ -6,8 +6,9 @@ gen tcp/websocket server base on message
 ```
 go get github.com/golang/protobuf/proto
 go get github.com/gorilla/websocket
-go get github.com/golang/glog
+go get github.com/cihub/seelog
 go get github.com/koding/multiconfig
+go get github.com/garyburd/redigo/redis
 ```
 ### TODO
 ```

@@ -2,12 +2,12 @@
 package network
 
 import (
-	"fmt"
 	"net"
 	"time"
 
 	"github.com/gfandada/gserver/logger"
 	"github.com/gfandada/gserver/network/protobuff"
+	"github.com/gfandada/gserver/util"
 )
 
 // 定义网关结构体
@@ -88,37 +88,41 @@ func (gate *Gate) OnInit() {
 
 // 资源回收
 func (gate *Gate) OnDestroy() {
-	logger.Error(fmt.Sprintf("gateway OnDestroy, %v", gate))
+	logger.Debug("gateway %d OnDestroy %v", util.GetPid(), gate)
 }
 
 /****************************实现了Iagent接口**********************************/
 
 func (agent *Agent) Run() {
 	if agent.Gate == nil {
-		logger.Error(fmt.Sprintf("agent Run params is nil, %v", agent))
+		logger.Error("agent Run params is nil, %v", agent)
 		return
 	}
+	logger.Debug("ws agent %d run %v", util.GetPid(), agent)
 	for {
 		msg, err := agent.Conn.ReadMsg()
 		if err != nil {
+			logger.Debug("agent run err:%v", err)
 			break
 		}
 		if agent.Gate.MessageProcessor != nil {
 			realMsg, errs := agent.Gate.MessageProcessor.Deserialize(msg)
 			if errs != nil {
-				logger.Error(fmt.Sprintf("Deserialize err:%v", errs))
+				logger.Error("Deserialize err:%v", errs)
 				break
 			}
+			logger.Debug("agent %v read msg %v", agent, realMsg)
 			if err := agent.Gate.MessageProcessor.Router(realMsg, agent); err != nil {
-				logger.Error(fmt.Sprintf("msg route err:%v", errs))
+				logger.Error("msg route err:%v", errs)
 				break
 			}
 		}
 	}
+	logger.Debug("ws agent %d stop %v", util.GetPid(), agent)
 }
 
 func (agent *Agent) OnClose() {
-	logger.Info(fmt.Sprintf("agent OnClose:%v", agent))
+	logger.Debug("agent OnClose:%v userdata:%v", agent, agent.UserData)
 	if agent.UserData != nil {
 		DeleteSessionConn(agent.UserData.(uint64))
 	}
@@ -134,7 +138,7 @@ func (agent *Agent) WriteMsg(msg protobuff.RawMessage) {
 		}
 		err = agent.Conn.WriteMsg(data...)
 		if err != nil {
-			logger.Error(fmt.Sprintf("write message %v error: %v", msg.MsgId, err))
+			logger.Error("write message %v error: %v", msg.MsgId, err)
 		}
 	}
 }
@@ -184,6 +188,7 @@ func (agent *Agent) Ack(data []interface{}) {
 	case 1:
 		// ack自己
 		agent.WriteMsg(data[0].(protobuff.RawMessage))
+		logger.Debug("agent ack %v message %v", agent, data[0])
 		return
 	case 3:
 		// ack自己
@@ -191,6 +196,7 @@ func (agent *Agent) Ack(data []interface{}) {
 		// 更新session
 		AddSessionConn(data[1].(uint64), data[2].(*Agent))
 		agent.SetUserData(data[1].(uint64))
+		logger.Debug("agent ack %v message %v", agent, data[0])
 		return
 	}
 }

@@ -104,7 +104,7 @@ func (server *LocalServer) Register(msg interface{}, msgHandler interface{}) err
 func (server *LocalServer) Exec(input *InputMessage) {
 	defer func() {
 		if r := recover(); r != nil {
-			logger.Error(fmt.Sprintf("genserver Exec panic error，%v:", r))
+			logger.Error("genserver Exec error: %v", r)
 			server.ret(input, &OutputMessage{Err: fmt.Errorf("%v", r)})
 		}
 	}()

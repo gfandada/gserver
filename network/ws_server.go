@@ -42,13 +42,13 @@ type WsHandler struct {
 func (handler *WsHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	if r.Method != "GET" {
 		http.Error(w, "Method not allowed", 405)
-		logger.Error(fmt.Sprintf("Method not allowed, %s", r.Method))
+		logger.Error("Method not allowed, %s", r.Method)
 		return
 	}
 	// 升级http->websocket
 	conn, err := handler.Upgrader.Upgrade(w, r, nil)
 	if err != nil {
-		logger.Error(fmt.Sprintf("upgrade error, %v", err))
+		logger.Error("upgrade error, %v", err)
 		return
 	}
 	conn.SetReadLimit(int64(handler.MaxMsgLen))

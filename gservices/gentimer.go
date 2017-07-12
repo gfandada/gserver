@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/HuKeping/rbtree"
+	"github.com/gfandada/gserver/logger"
 )
 
 // 定时器初始值
@@ -48,6 +49,7 @@ func NewLocalTimerServer() *LocalTimerServer {
 		ExitChan:   make(chan struct{}, 0),
 	}
 	server.start()
+	logger.Info("gentimer run")
 	return server
 }
 
@@ -194,6 +196,7 @@ func (server *LocalTimerServer) Reset() *LocalTimerServer {
 	server.Count = 0
 	server.cleanJobs()
 	server.start()
+	logger.Info("gentimer Reset")
 	return server
 }
 
@@ -243,12 +246,14 @@ func (server *LocalTimerServer) removeJob(job *Job) {
 func (server *LocalTimerServer) StopByGrace() {
 	server.exit()
 	server.immediate()
+	logger.Warning("gentimer StopByGrace")
 }
 
 // 强制关闭
 func (server *LocalTimerServer) StopByForce() {
 	server.exit()
 	server.cleanJobs()
+	logger.Warning("gentimer StopByForce")
 }
 
 func (server *LocalTimerServer) immediate() {

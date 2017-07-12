@@ -4,6 +4,8 @@ package network
 import (
 	"errors"
 	"sync"
+
+	"github.com/gfandada/gserver/logger"
 )
 
 // 用户id-用户数据
@@ -42,10 +44,12 @@ func AddSessionConn(userId uint64, agent *Agent) {
 	sessionMapMux.Lock()
 	defer sessionMapMux.Unlock()
 	SessionConn[userId] = agent
+	logger.Debug("AddSessionConn userid %d agent %v", userId, agent)
 }
 
 func DeleteSessionConn(userId uint64) {
 	sessionMapMux.Lock()
 	defer sessionMapMux.Unlock()
 	delete(SessionConn, userId)
+	logger.Debug("DeleteSessionConn userid %d", userId)
 }

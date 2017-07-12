@@ -37,6 +37,7 @@ func register(iMod Imodule) {
 	mod.Moduler = iMod
 	mod.ChanClose = make(chan bool, 1)
 	mods = append(mods, mod)
+	logger.Info("register Imodule，%v", iMod)
 }
 
 // 回收模块
@@ -47,7 +48,7 @@ func destroy() {
 		mod.WaitSync.Wait()
 		defer func() {
 			if r := recover(); r != nil {
-				logger.Error(fmt.Sprintf("destroy module panic error，%v", r))
+				logger.Error("destroy module panic error，%v", r)
 			}
 		}()
 		mod.Moduler.OnDestroy()

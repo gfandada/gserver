@@ -4,6 +4,7 @@ import (
 	"net"
 	"sync"
 
+	"github.com/gfandada/gserver/logger"
 	"github.com/gorilla/websocket"
 )
 
@@ -81,6 +82,7 @@ func (wsConn *WsConn) RemoteAddr() net.Addr {
 }
 
 func (wsConn *WsConn) Close() {
+	logger.Debug("close ws %v", wsConn)
 	if !wsConn.Online {
 		return
 	}

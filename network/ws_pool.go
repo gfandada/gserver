@@ -2,7 +2,6 @@
 package network
 
 import (
-	"fmt"
 	"sync"
 
 	"github.com/gfandada/gserver/logger"
@@ -35,7 +34,7 @@ func AddWsConn(conn *websocket.Conn, maxNum int) bool {
 	wsconnMapMux.Lock()
 	defer wsconnMapMux.Unlock()
 	if wsconnPool == nil || len(wsconnPool) >= maxNum {
-		logger.Warning(fmt.Sprintf("The number of connections has reached the upper limit, %d", maxNum))
+		logger.Warning("The number of connections has reached the upper limit, %d", maxNum)
 		return false
 	}
 	wsconnPool[conn] = struct{}{}
@@ -47,4 +46,5 @@ func DeleteConn(conn *websocket.Conn) {
 	wsconnMapMux.Lock()
 	defer wsconnMapMux.Unlock()
 	delete(wsconnPool, conn)
+	logger.Debug("DeleteConn ws %v", conn)
 }
