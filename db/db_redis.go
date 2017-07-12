@@ -57,7 +57,6 @@ func NewRedis(redisCfg Redis) *Cache {
 	cache.initRedis(redisCfg)
 	conn := cache.pool.Get()
 	defer conn.Close()
-	logger.Info("redis init succeed: %v", redisCfg)
 	return cache
 }
 
@@ -65,16 +64,19 @@ func (cache *Cache) initRedis(redisCfg Redis) {
 	dialFunc := func() (c redis.Conn, err error) {
 		c, err = redis.Dial("tcp", redisCfg.RedisServer)
 		if err != nil {
+			logger.Error("redis Dial error: %v", err)
 			return nil, err
 		}
 		if redisCfg.Auth != "" {
 			if _, err := c.Do("AUTH", redisCfg.Auth); err != nil {
+				logger.Error("redis AUTH error: %v", err)
 				c.Close()
 				return nil, err
 			}
 		}
 		_, selecterr := c.Do("SELECT", redisCfg.DbNum)
 		if selecterr != nil {
+			logger.Error("redis SELECT error: %v dbbum: %d", err, redisCfg.DbNum)
 			c.Close()
 			return nil, selecterr
 		}
