@@ -308,7 +308,7 @@ func (job Job) GetTimes() uint64 {
 func (job *Job) action() {
 	defer func() {
 		if err := recover(); err != nil {
-			panic(err)
+			logger.Error("gentimer Exec job %v error: %v", job, err)
 		}
 	}()
 	job.JobHandler(job.Args)
