@@ -311,8 +311,8 @@ func (job *Job) action() {
 			logger.Error("gentimer Exec job %v error: %v", job, err)
 		}
 	}()
+	logger.Debug("start action job %v ", job)
 	job.JobHandler(job.Args)
-	logger.Debug("action job %v ", job)
 }
 
 func (job *Job) ExecWithGo(isGo bool) {
