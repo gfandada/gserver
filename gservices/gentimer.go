@@ -312,6 +312,7 @@ func (job *Job) action() {
 		}
 	}()
 	job.JobHandler(job.Args)
+	logger.Debug("action job %v ", job)
 }
 
 func (job *Job) ExecWithGo(isGo bool) {
