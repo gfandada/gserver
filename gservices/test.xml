@@ -1,0 +1,8 @@
+<seelog minlevel="debug" maxlevel="error">  
+    <outputs formatid="main">  
+        <console/> 
+    </outputs>  
+    <formats>  
+        <format id="main" format="%UTCDate %UTCTime [%LEV] [%RelFile line%Line] : %Msg%n"/>  
+    </formats>  
+</seelog> 

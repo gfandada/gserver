@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"testing"
 	"time"
+
+	"github.com/gfandada/gserver/logger"
 )
 
 type test struct {
@@ -12,6 +14,7 @@ type test struct {
 }
 
 func Test_timer(t *testing.T) {
+	logger.Start("./test.xml")
 	server := NewLocalTimerServer()
 	// 添加重复定时任务
 	job1, ok := server.AddJobRepeat(time.Duration(time.Millisecond*20), 5, func(a []interface{}) {
