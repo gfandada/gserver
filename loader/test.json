@@ -1,0 +1,17 @@
+{
+  "Name": "fanlin",
+  "Enabled": true,
+  "Qq": 1009310068,
+  "Numbers": [
+    123,
+    456
+  ],
+  "Email": [
+    "1009310068@qq.com",
+    "gfandada@gmail.com"
+  ],
+  "Redis": {
+    "Ip": "192.168.78.130",
+    "Port": 6379
+  }
+}
