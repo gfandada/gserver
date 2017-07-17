@@ -147,7 +147,7 @@ func (l *Loader) Get(table string, row uint32, fieldname string) (interface{}, e
 // 获取关联配置数据
 // @params table 		表名
 // @params rowname 		行名
-// @params fieldname 	列名（类型是others，即关联表的主键数据）
+// @params fieldname 	列名（也就是相关联的表的主键）
 func (l *Loader) GetCorrelation(table string, row uint32, fieldname string) (interface{}, error) {
 	table1, ok := dataConfig.tables[table]
 	if !ok {
