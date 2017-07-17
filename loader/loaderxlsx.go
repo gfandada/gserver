@@ -81,6 +81,8 @@ func (c *configs) initXlsx(name string) {
 			// 行数据
 			rowData := new(rows)
 			rowData.records = make(map[string]interface{})
+			// 内置的行数据
+			rowData.records["inner_row"] = sheet.Rows[i].Cells
 			for j, v := range sheet.Rows[i].Cells {
 				c.typeAndField(rowData.records,
 					fileds.Cells[j].String(),
@@ -140,4 +142,31 @@ func (l *Loader) Get(table string, row uint32, fieldname string) (interface{}, e
 		return nil, errors.New("table.data not exist")
 	}
 	return data.records[fieldname], nil
+}
+
+// 获取关联配置数据
+// @params table 		表名
+// @params rowname 		行名
+// @params fieldname 	列名（类型是others，即关联表的主键数据）
+func (l *Loader) GetCorrelation(table string, row uint32, fieldname string) (interface{}, error) {
+	table1, ok := dataConfig.tables[table]
+	if !ok {
+		return nil, errors.New("table not exist")
+	}
+	data, ok1 := table1.data[row]
+	if !ok1 {
+		return nil, errors.New("table.data not exist")
+	}
+	rowCorrelation := data.records[fieldname].(uint32)
+	// 获取关联表
+	table1, ok = dataConfig.tables[fieldname]
+	if !ok {
+		return nil, errors.New("correlation table not exist")
+	}
+	// 获取关联表的行数据
+	data, ok1 = table1.data[rowCorrelation]
+	if !ok1 {
+		return nil, errors.New("correlation table.data not exist")
+	}
+	return data.records["inner_row"], nil
 }
