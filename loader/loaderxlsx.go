@@ -11,7 +11,7 @@
 package loader
 
 import (
-	"errors"
+	"fmt"
 	"io/ioutil"
 	"strconv"
 
@@ -135,11 +135,11 @@ func (c *configs) typeAndField(rowData map[string]interface{}, filedName string,
 func (l *Loader) Get(table string, row uint32, fieldname string) (interface{}, error) {
 	table1, ok := dataConfig.tables[table]
 	if !ok {
-		return nil, errors.New("table not exist")
+		return nil, fmt.Errorf("table not exist %s", table)
 	}
 	data, ok1 := table1.data[row]
 	if !ok1 {
-		return nil, errors.New("table.data not exist")
+		return nil, fmt.Errorf("row data not exist %s:%s", table, row)
 	}
 	return data.records[fieldname], nil
 }
@@ -151,22 +151,47 @@ func (l *Loader) Get(table string, row uint32, fieldname string) (interface{}, e
 func (l *Loader) GetCorrelation(table string, row uint32, fieldname string) (interface{}, error) {
 	table1, ok := dataConfig.tables[table]
 	if !ok {
-		return nil, errors.New("table not exist")
+		return nil, fmt.Errorf("table not exist %s", table)
 	}
 	data, ok1 := table1.data[row]
 	if !ok1 {
-		return nil, errors.New("table.data not exist")
+		return nil, fmt.Errorf("row data not exist %s:%s", table, row)
 	}
 	rowCorrelation := data.records[fieldname].(uint32)
 	// 获取关联表
 	table1, ok = dataConfig.tables[fieldname]
 	if !ok {
-		return nil, errors.New("correlation table not exist")
+		return nil, fmt.Errorf("correlation table not exist %s:%s:%s", table, row, fieldname)
 	}
 	// 获取关联表的行数据
 	data, ok1 = table1.data[rowCorrelation]
 	if !ok1 {
-		return nil, errors.New("correlation table.data not exist")
+		return nil, fmt.Errorf("row data not exist %s:%s", table, row)
+	}
+	return data.records["inner_row"], nil
+}
+
+// 获取表的长度
+// @params table 		表名
+func (l *Loader) GetTableLen(table string) (int, error) {
+	table1, ok := dataConfig.tables[table]
+	if !ok {
+		return 0, fmt.Errorf("table not exist %s", table)
+	}
+	return len(table1.data), nil
+}
+
+// 获取表的长度
+// @params table 		表名
+func (l *Loader) GetTableRow(table string, row uint32) (interface{}, error) {
+	table1, ok := dataConfig.tables[table]
+	if !ok {
+		return 0, fmt.Errorf("table not exist %s", table)
+	}
+	// 获取关联表的行数据
+	data, ok1 := table1.data[row]
+	if !ok1 {
+		return nil, fmt.Errorf("row data not exist %s:%s", table, row)
 	}
 	return data.records["inner_row"], nil
 }
