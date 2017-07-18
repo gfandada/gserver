@@ -1,7 +1,6 @@
 package loader
 
 import (
-	"fmt"
 	"testing"
 
 	"github.com/gfandada/gserver/logger"

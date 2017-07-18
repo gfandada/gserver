@@ -89,9 +89,13 @@ func (c *configs) initXlsx(name string) {
 					filedsType.Cells[j].String(),
 					v)
 			}
-			// 写表数据
-			key, _ := strconv.ParseInt(sheet.Rows[i].Cells[0].String(), 10, 64)
-			table.data[uint32(key)] = rowData
+			if len(sheet.Rows[i].Cells) > 0 {
+				// 写表数据
+				key, _ := strconv.ParseInt(sheet.Rows[i].Cells[0].String(), 10, 64)
+				if key != 0 {
+					table.data[uint32(key)] = rowData
+				}
+			}
 		}
 		// 写配置
 		dataConfig.tables[sheet.Name] = table
@@ -126,6 +130,7 @@ func (c *configs) typeAndField(rowData map[string]interface{}, filedName string,
 		value = fieldVlaue.String()
 	}
 	rowData[filedName] = value
+	return
 }
 
 // 获取配置数据
@@ -181,7 +186,7 @@ func (l *Loader) GetTableLen(table string) (int, error) {
 	return len(table1.data), nil
 }
 
-// 获取表的长度
+// 获取表的行数据
 // @params table 		表名
 func (l *Loader) GetTableRow(table string, row uint32) (interface{}, error) {
 	table1, ok := dataConfig.tables[table]
