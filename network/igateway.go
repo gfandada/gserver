@@ -12,5 +12,4 @@ type Igateway interface {
 	Destroy()
 	GetUserData() interface{}
 	SetUserData(data interface{})
-	Ack(data []interface{})
 }
