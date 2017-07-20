@@ -88,7 +88,7 @@ func (msgManager *MsgManager) Deserialize(data []byte) (*RawMessage, error) {
 		err := proto.Unmarshal(data[2:], msg.(proto.Message))
 		return &RawMessage{MsgId: id, MsgData: msg}, err
 	}
-	return &RawMessage{}, errors.New("message has not registered")
+	return &RawMessage{}, fmt.Errorf("message %d has not registered", id)
 }
 
 func (msgManager *MsgManager) Router(msg *RawMessage, userData interface{}) error {
@@ -104,5 +104,5 @@ func (msgManager *MsgManager) Router(msg *RawMessage, userData interface{}) erro
 			return nil
 		}
 	}
-	return errors.New("message has not registered")
+	return fmt.Errorf("message %d has not registered", msg.MsgId)
 }
