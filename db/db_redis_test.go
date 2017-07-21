@@ -1,6 +1,7 @@
 package db
 
 import (
+	"fmt"
 	"testing"
 	"time"
 
@@ -142,6 +143,9 @@ func Test_redis(t *testing.T) {
 	if v, _ := redis.String(vv[1], nil); v != "author1" {
 		t.Error("GetMulti ERROR")
 	}
+	fmt.Println(redis.String(bm.Hget("1", "a"), nil))
+	fmt.Println(bm.Hset("1", "a", "hellowdafd123123"))
+	fmt.Println(redis.String(bm.Hget("1", "a"), nil))
 	// test clear all
 	//	if err = bm.ClearAll(); err != nil {
 	//		t.Error("clear all err")

@@ -124,6 +124,14 @@ func (cache *Cache) Get(key string) interface{} {
 	return nil
 }
 
+// 获取指定key，基于hset
+func (cache *Cache) Hget(key string, filed string) interface{} {
+	if v, err := cache.do("HGET", key, filed); err == nil {
+		return v
+	}
+	return nil
+}
+
 // 获取多个key
 func (cache *Cache) GetMulti(keys []string) []interface{} {
 	size := len(keys)
@@ -160,6 +168,18 @@ ERROR:
 func (cache *Cache) Put(key string, val interface{}, timeout time.Duration) error {
 	var err error
 	if _, err = cache.do("SETEX", key, int64(timeout/time.Second), val); err != nil {
+		return err
+	}
+	if _, err = cache.do("HSET", cache.key, key, true); err != nil {
+		return err
+	}
+	return err
+}
+
+// 存储一对k-v，基于hset
+func (cache *Cache) Hset(key string, filed string, val interface{}) error {
+	var err error
+	if _, err = cache.do("HSET", key, filed, val); err != nil {
 		return err
 	}
 	if _, err = cache.do("HSET", cache.key, key, true); err != nil {
