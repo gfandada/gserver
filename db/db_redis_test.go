@@ -82,7 +82,7 @@ func Test_redis(t *testing.T) {
 		DbNum:              3,
 	}
 	bm := NewRedis(redisCfg)
-	timeoutDuration := 10 * time.Second
+	timeoutDuration := 2 * time.Second
 	var err error
 	if err = bm.Put("gfandada", 1, timeoutDuration); err != nil {
 		t.Error("set Error", err)
@@ -90,7 +90,7 @@ func Test_redis(t *testing.T) {
 	if !bm.IsExist("gfandada") {
 		t.Error("check err")
 	}
-	time.Sleep(11 * time.Second)
+	time.Sleep(3 * time.Second)
 	if bm.IsExist("gfandada") {
 		t.Error("check err")
 	}
@@ -144,10 +144,66 @@ func Test_redis(t *testing.T) {
 		t.Error("GetMulti ERROR")
 	}
 	fmt.Println(redis.String(bm.Hget("1", "a"), nil))
-	fmt.Println(bm.Hset("1", "a", "hellowdafd123123"))
-	fmt.Println(redis.String(bm.Hget("1", "a"), nil))
+	fmt.Println(bm.Hset("1", "b", "123123"))
+	fmt.Println(bm.Hset("1", "c", 999999))
+	fmt.Println(bm.Hset("1", "d", 123))
+	for _, v := range bm.HgetMulti("1", []interface{}{"a", "b", "c"}) {
+		fmt.Println(redis.String(v, nil))
+	}
 	// test clear all
 	//	if err = bm.ClearAll(); err != nil {
 	//		t.Error("clear all err")
 	//	}
+	fmt.Println("开启一个事务操作")
+	bm.Put("test", 203, INFINITE)
+	bm.Do("MULTI")
+	v, _ := redis.Int(bm.Get("test"), err)
+	bm.Put("test", v+20, INFINITE)
+	bm.Do("EXEC")
+	fmt.Println("开启一个乐观锁事务操作")
+	bm.Do("WATCH", "test")
+	v, _ = redis.Int(bm.Get("test"), err)
+	bm.Do("MULTI")
+	bm.Put("test", v-30, INFINITE)
+	bm.Do("EXEC")
+	v, _ = redis.Int(bm.Get("test"), err)
+	fmt.Println("使用Transaction来操作")
+	//	fmt.Println(bm.Transaction("test", func() interface{} {
+	//		v, _ = redis.Int(bm.Get("test"), err)
+	//		bm.Put("test", v-30, INFINITE)
+	//		fmt.Println(v)
+	//		return 5
+	//	}))
+	//	bm.Do("WATCH", "test")
+	//	bm.Do("MULTI")
+	//	v, _ = redis.Int(bm.Get("test"), err)
+	//	bm.Put("test", v-30, INFINITE)
+	//	fmt.Println(v)
+	//	bm.Do("DISCARD")
+	//	fmt.Println(bm.Do("EXEC"))
+	bm.Hset("hehe", "age", 123)
+	bm.Transaction(func() ([]*Ret, int) {
+		ret := []*Ret{}
+		ret = append(ret, &Ret{
+			Table: "hehe",
+			Key:   "age",
+			Value: 123 - 20,
+		})
+		ret = append(ret, &Ret{
+			Table: "hehe",
+			Key:   "name",
+			Value: "fanlin",
+		})
+		ret = append(ret, &Ret{
+			Table: "hehe",
+			Key:   "num",
+			Value: 123,
+		})
+		ret = append(ret, &Ret{
+			Table: "hehe",
+			Key:   2,
+			Value: 123,
+		})
+		return ret, 0
+	}, "hehe:age", "hehe:name", "hehe:num")
 }

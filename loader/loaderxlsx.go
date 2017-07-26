@@ -200,3 +200,15 @@ func (l *Loader) GetTableRow(table string, row uint32) (interface{}, error) {
 	}
 	return data.records["inner_row"], nil
 }
+
+// 数据类型转换
+func (l *Loader) GetUint32(data interface{}, err error) (uint32, error) {
+	if err != nil {
+		return 0, err
+	}
+	switch data.(type) {
+	case uint32:
+		return data.(uint32), nil
+	}
+	return 0, fmt.Errorf("data not uint32")
+}

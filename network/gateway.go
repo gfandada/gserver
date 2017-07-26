@@ -134,11 +134,12 @@ func (agent *Agent) WriteMsg(msg protobuff.RawMessage) {
 	if agent.Gate.MessageProcessor != nil {
 		data, err := agent.Gate.MessageProcessor.Serialize(msg)
 		if err != nil {
+			logger.Error("Serialize message %v error: %v", msg, err)
 			return
 		}
 		err = agent.Conn.WriteMsg(data...)
 		if err != nil {
-			logger.Error("write message %v error: %v", msg.MsgId, err)
+			logger.Error("write message %v error: %v", msg, err)
 		}
 	}
 }
