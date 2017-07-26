@@ -55,3 +55,21 @@ func RandIntervalN(b1, b2 int32, n uint32) []int32 {
 	}
 	return r
 }
+
+// 随机计算
+// 方法调用者随机权重值为b1，权重池为b2
+// 返回调用者的命中情况：true命中 false未命中
+// 此方法不适用于有自定义的起始区域的数值命中
+func RandHit(b1, b2 int32) bool {
+	if b1 == b2 {
+		return true
+	}
+	if b1 <= 0 {
+		return false
+	}
+	b3 := RandInterval(1, b2)
+	if b3 <= b1 {
+		return true
+	}
+	return false
+}
