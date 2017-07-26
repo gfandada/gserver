@@ -212,3 +212,15 @@ func (l *Loader) GetUint32(data interface{}, err error) (uint32, error) {
 	}
 	return 0, fmt.Errorf("data not uint32")
 }
+
+// 数据类型转换
+func (l *Loader) GetString(data interface{}, err error) (string, error) {
+	if err != nil {
+		return "", err
+	}
+	switch data.(type) {
+	case string:
+		return data.(string), nil
+	}
+	return "", fmt.Errorf("data not string")
+}
