@@ -9,6 +9,8 @@ go get github.com/gorilla/websocket
 go get github.com/cihub/seelog
 go get github.com/koding/multiconfig
 go get github.com/garyburd/redigo/redis
+go get github.com/HuKeping/rbtree
+go get github.com/tealeg/xlsx
 ```
 ### TODO
 ```
