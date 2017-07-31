@@ -56,6 +56,7 @@ func (s *Service) Exec(stream pb.ClusterService_RouterServer,
 	if exec == nil {
 		panic("no call function")
 	}
+	// TODO 需要优化
 	ret := make(chan *gservices.OutputMessage, 1)
 	outMessage, err := s.msgServer.NewLocalClient().Call(&gservices.InputMessage{
 		Msg:        msg.MsgId,

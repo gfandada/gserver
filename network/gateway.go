@@ -2,7 +2,6 @@
 package network
 
 import (
-	"fmt"
 	"io"
 	"net"
 	"time"
@@ -119,7 +118,7 @@ func (agent *Agent) Run() {
 			}
 			logger.Debug("agent %v read msg %v", agent, realMsg)
 			if err := agent.Gate.MessageProcessor.Router(realMsg, agent); err != nil {
-				// TODO FIXME 临时接口
+				// TODO  临时接口
 				if err := agent.Stream["login-service"].Send(&pb.Message{
 					Data: realMsg.MsgRaw,
 				}); err != nil {
@@ -147,7 +146,6 @@ func (agent *Agent) OnClose() {
 func (agent *Agent) recv() {
 	// 初始化集群流
 	streams := cluster.GetRouterStreams()
-	fmt.Println(streams)
 	agent.Stream = streams
 	for key := range agent.Stream {
 		router := func() {
