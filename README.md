@@ -11,6 +11,7 @@ go get github.com/koding/multiconfig
 go get github.com/garyburd/redigo/redis
 go get github.com/HuKeping/rbtree
 go get github.com/tealeg/xlsx
+go get google.golang.org/grpc
 ```
 ### TODO
 ```
