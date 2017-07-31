@@ -20,5 +20,7 @@ go get github.com/tealeg/xlsx
 4.storage timer job base on gentimer
 5.romote rpc for cluster
 ```
+### cluster
+![image](https://github.com/gfandada/gserver/blob/master/png/cluster.png)
 ### dataflow
 ![image](https://github.com/gfandada/gserver/blob/master/png/dataflow.png)
