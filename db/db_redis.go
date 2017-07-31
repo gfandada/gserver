@@ -52,6 +52,7 @@ type Redis struct {
 
 type Ret struct {
 	Table string
+	Type  string
 	Key   interface{}
 	Value interface{}
 }
@@ -137,6 +138,10 @@ func (cache *Cache) Transaction(call callback, key ...string) (code int, err err
 	}
 	conn.Send("MULTI")
 	for _, v := range ret {
+		//		switch v.Type {
+		//		case "HSET":
+		//		case "PUT":
+		//		}
 		if conn.Send("HSET", v.Table, v.Key, v.Value) != nil {
 			conn.Send("DISCARD")
 			break

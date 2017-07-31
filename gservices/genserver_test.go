@@ -14,7 +14,6 @@ func Test_localrpc(t *testing.T) {
 	function = add
 	// new rpc server
 	localServer := NewLocalServer(10)
-	localServer.Start()
 	// new rpc client
 	client := localServer.NewLocalClient()
 	ret := make(chan *OutputMessage, 1)

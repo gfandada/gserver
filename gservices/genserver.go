@@ -48,10 +48,11 @@ func NewLocalServer(length int) *LocalServer {
 	server := new(LocalServer)
 	server.Functions = make(map[interface{}]interface{})
 	server.MessageBoxChan = make(chan *InputMessage, length)
+	server.start()
 	return server
 }
 
-func (server *LocalServer) Start() {
+func (server *LocalServer) start() {
 	go func() {
 		for {
 			select {

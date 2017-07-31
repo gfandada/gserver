@@ -1,0 +1,15 @@
+syntax = "proto3";
+
+package pb;
+
+// 通用的集群服务定义
+service ClusterService {
+	rpc Router(stream pb.message) returns (stream pb.message);
+}
+
+// 通用流数据定义
+message message {
+	uint32 	id   = 1; 	// 消息id
+	bytes   data = 2; 	// 消息数据
+}
+

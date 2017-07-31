@@ -1,6 +1,7 @@
 package gserver
 
 import (
+	"github.com/gfandada/gserver/cluster"
 	"github.com/gfandada/gserver/logger"
 	"github.com/gfandada/gserver/module"
 )
@@ -13,4 +14,9 @@ func Run(mods ...module.Imodule) {
 // 启动日志
 func RunLogger(path string) {
 	logger.Start(path)
+}
+
+// 初始化集群
+func RunCluster(path string) {
+	cluster.Init(path)
 }

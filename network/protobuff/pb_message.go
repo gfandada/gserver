@@ -8,7 +8,6 @@ import (
 	"reflect"
 
 	"github.com/gfandada/gserver/gservices"
-
 	"github.com/golang/protobuf/proto"
 )
 
@@ -29,6 +28,7 @@ type MessageInfo struct {
 type RawMessage struct {
 	MsgId   uint16
 	MsgData interface{}
+	MsgRaw  []byte // id+data
 }
 
 // 构建一个新的消息处理器
@@ -53,24 +53,36 @@ func (msgManager *MsgManager) RegisterMessage(rawM RawMessage, handler gservices
 	newMessage := new(MessageInfo)
 	newMessage.MsgType = reflect.TypeOf(rawM.MsgData.(proto.Message))
 	newMessage.MsgHandler = handler
-	newMessage.MsgClient = msgServer.NewLocalClient()
+	if msgServer != nil {
+		newMessage.MsgClient = msgServer.NewLocalClient()
+	}
 	msgManager.MsgMap[rawM.MsgId] = newMessage
 }
 
 /******************************实现了imessage接口*****************************/
 
-func (msgManager *MsgManager) Serialize(rawM RawMessage) ([][]byte, error) {
+func (msgManager *MsgManager) Serialize(rawM RawMessage) ([]byte, error) {
 	if _, ok := msgManager.MsgMap[rawM.MsgId]; !ok {
 		return nil, errors.New("message has not registered")
 	}
-	rawId := make([]byte, 2)
-	if msgManager.LittleEndian {
-		binary.LittleEndian.PutUint16(rawId, rawM.MsgId)
+	if rawM.MsgRaw == nil {
+		rawId := make([]byte, 2)
+		if msgManager.LittleEndian {
+			binary.LittleEndian.PutUint16(rawId, rawM.MsgId)
+		} else {
+			binary.BigEndian.PutUint16(rawId, rawM.MsgId)
+		}
+		data, err := proto.Marshal(rawM.MsgData.(proto.Message))
+		if err != nil {
+			return nil, nil
+		}
+		c := make([]byte, 2+len(data))
+		copy(c, rawId)
+		copy(c[len(rawId):], data)
+		return c, err
 	} else {
-		binary.BigEndian.PutUint16(rawId, rawM.MsgId)
+		return rawM.MsgRaw, nil
 	}
-	data, err := proto.Marshal(rawM.MsgData.(proto.Message))
-	return [][]byte{rawId, data}, err
 }
 
 func (msgManager *MsgManager) Deserialize(data []byte) (*RawMessage, error) {
@@ -83,10 +95,14 @@ func (msgManager *MsgManager) Deserialize(data []byte) (*RawMessage, error) {
 	} else {
 		id = binary.BigEndian.Uint16(data)
 	}
+	// TODO 网关层面上存在不必要的解码过程
 	if info, ok := msgManager.MsgMap[id]; ok {
+		//if info.MsgClient != nil {
 		msg := reflect.New(info.MsgType.Elem()).Interface()
 		err := proto.Unmarshal(data[2:], msg.(proto.Message))
-		return &RawMessage{MsgId: id, MsgData: msg}, err
+		return &RawMessage{MsgId: id, MsgData: msg, MsgRaw: data}, err
+		//}
+		//return &RawMessage{MsgRaw: data}, nil
 	}
 	return &RawMessage{}, fmt.Errorf("message %d has not registered", id)
 }

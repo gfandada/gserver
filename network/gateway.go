@@ -2,9 +2,13 @@
 package network
 
 import (
+	"fmt"
+	"io"
 	"net"
 	"time"
 
+	"github.com/gfandada/gserver/cluster"
+	"github.com/gfandada/gserver/cluster/pb"
 	"github.com/gfandada/gserver/logger"
 	"github.com/gfandada/gserver/network/protobuff"
 	"github.com/gfandada/gserver/util"
@@ -27,9 +31,10 @@ type Gate struct {
 }
 
 type Agent struct {
-	Conn     Iconn       // 套接字套作接口
-	Gate     *Gate       // 网关配置数据
-	UserData interface{} // 用户数据
+	Conn     Iconn                                     // 套接字套作接口
+	Gate     *Gate                                     // 网关配置数据
+	Stream   map[string]pb.ClusterService_RouterClient // 接受集群数据流
+	UserData interface{}                               // 用户数据
 }
 
 // tcp服务器
@@ -98,7 +103,8 @@ func (agent *Agent) Run() {
 		logger.Error("agent Run params is nil, %v", agent)
 		return
 	}
-	logger.Debug("ws agent %d run %v", util.GetPid(), agent)
+	// 启动集群流监听器
+	agent.recv()
 	for {
 		msg, err := agent.Conn.ReadMsg()
 		if err != nil {
@@ -113,8 +119,16 @@ func (agent *Agent) Run() {
 			}
 			logger.Debug("agent %v read msg %v", agent, realMsg)
 			if err := agent.Gate.MessageProcessor.Router(realMsg, agent); err != nil {
-				logger.Error("msg route err:%v", errs)
-				break
+				// TODO FIXME 临时接口
+				if err := agent.Stream["login-service"].Send(&pb.Message{
+					Data: realMsg.MsgRaw,
+				}); err != nil {
+					logger.Error("msg route err:%v", errs)
+					break
+				}
+				logger.Debug("agent %v cluster route msg %v", agent, realMsg)
+			} else {
+				logger.Debug("agent %v local route msg %v", agent, realMsg)
 			}
 		}
 	}
@@ -128,6 +142,39 @@ func (agent *Agent) OnClose() {
 	}
 }
 
+// 接收集群数据
+// FIXME 暂未内置开关槽
+func (agent *Agent) recv() {
+	// 初始化集群流
+	streams := cluster.GetRouterStreams()
+	fmt.Println(streams)
+	agent.Stream = streams
+	for key := range agent.Stream {
+		router := func() {
+			for {
+				data, err := agent.Stream[key].Recv()
+				logger.Debug("recv cluster service {%s} stream {%v}", key, data)
+				// 流关闭
+				if err == io.EOF {
+					logger.Info("recv cluster service {%s} stream closed", key)
+					return
+				}
+				if err != nil {
+					logger.Info("recv cluster service {%s} stream error %v", key, err)
+					return
+				}
+				agent.WriteMsg(protobuff.RawMessage{
+					MsgId:  uint16(data.Id), // 仅用于认证
+					MsgRaw: data.Data,       // data
+				})
+				logger.Debug("cluster service recver {%s} ack client {%v}", key, agent.RemoteAddr())
+			}
+		}
+		go router()
+		logger.Info("run cluster service {%s} stream recver", key)
+	}
+}
+
 /****************************实现了Igateway接口**********************************/
 
 func (agent *Agent) WriteMsg(msg protobuff.RawMessage) {
@@ -137,7 +184,7 @@ func (agent *Agent) WriteMsg(msg protobuff.RawMessage) {
 			logger.Error("Serialize message %v error: %v", msg, err)
 			return
 		}
-		err = agent.Conn.WriteMsg(data...)
+		err = agent.Conn.WriteMsg(data)
 		if err != nil {
 			logger.Error("write message %v error: %v", msg, err)
 		}
