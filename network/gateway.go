@@ -118,16 +118,12 @@ func (agent *Agent) Run() {
 			}
 			logger.Debug("agent %v read msg %v", agent, realMsg)
 			if err := agent.Gate.MessageProcessor.Router(realMsg, agent); err != nil {
-				// TODO  临时接口
-				if err := agent.Stream["login-service"].Send(&pb.Message{
+				if err := agent.Stream["game"].Send(&pb.Message{
 					Data: realMsg.MsgRaw,
 				}); err != nil {
 					logger.Error("msg route err:%v", errs)
 					break
 				}
-				logger.Debug("agent %v cluster route msg %v", agent, realMsg)
-			} else {
-				logger.Debug("agent %v local route msg %v", agent, realMsg)
 			}
 		}
 	}

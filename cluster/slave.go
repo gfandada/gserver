@@ -5,83 +5,36 @@ import (
 	"net"
 
 	"github.com/gfandada/gserver/cluster/pb"
-	"github.com/gfandada/gserver/gservices"
 	"github.com/gfandada/gserver/logger"
 	"github.com/gfandada/gserver/network/protobuff"
-	//	"github.com/gfandada/gserver/util"
 	"google.golang.org/grpc"
 )
 
 type Service struct {
-	name      string
-	manager   *protobuff.MsgManager
-	msgServer *gservices.LocalServer
+	Name    string
+	Manager *protobuff.MsgManager
 }
 
-// 启动一个远程rpc服务
-// TODO 会优化成配置
-func Start(name string, add string) *Service {
+type ServiceAck struct {
+	Stream   pb.ClusterService_RouterServer
+	Die      chan struct{}
+	UserData interface{}
+	Service  *Service
+	SendCh   chan protobuff.RawMessage
+}
+
+func Start(name string, add string, code *protobuff.MsgManager) {
 	listen, err := net.Listen("tcp", add)
 	if err != nil {
-		logger.Error("rpc server %s listen error", name)
+		logger.Error("service {%s} listen error {%v}", name, err)
 	}
 	s := new(Service)
-	s.name = name
-	s.manager = protobuff.NewMsgManager()
-	s.msgServer = gservices.NewLocalServer(1024 * 2)
+	s.Name = name
+	s.Manager = code
 	serve := grpc.NewServer()
 	pb.RegisterClusterServiceServer(serve, s)
-	logger.Info("run cluster service {%s:%s}", name, add)
+	logger.Info("service {%s:%s} run", name, add)
 	go serve.Serve(listen)
-	return s
-}
-
-// 注册msg(非线程安全)
-// 先注册再使用
-func (s *Service) Register(rawM protobuff.RawMessage, handler gservices.MessageHandler3) error {
-	s.manager.RegisterMessage(rawM, handler, nil)
-	s.msgServer.Register(rawM.MsgId, handler)
-	return nil
-}
-
-// exec msg handler
-func (s *Service) Exec(stream pb.ClusterService_RouterServer,
-	msg *protobuff.RawMessage, die chan struct{}) {
-	defer func() {
-		if r := recover(); r != nil {
-			logger.Error("genserver Exec input %v error: %v", msg, r)
-		}
-	}()
-	exec := s.manager.MsgMap[msg.MsgId].MsgHandler
-	if exec == nil {
-		panic("no call function")
-	}
-	// TODO 需要优化
-	ret := make(chan *gservices.OutputMessage, 1)
-	outMessage, err := s.msgServer.NewLocalClient().Call(&gservices.InputMessage{
-		Msg:        msg.MsgId,
-		F:          exec,
-		Args:       []interface{}{msg.MsgData},
-		OutputChan: ret,
-	}, 2)
-	if err != nil {
-		logger.Error("cluster service {%s} exec {%d} error {%v}", s.name, msg.MsgId, err)
-		return
-	}
-	s.ret(stream, outMessage.Ret, die)
-}
-
-// 处理返回值
-func (s *Service) ret(stream pb.ClusterService_RouterServer, retD []interface{}, die chan struct{}) {
-	switch len(retD) {
-	// 同步ack
-	case 1:
-		s.send(stream, retD[0].(protobuff.RawMessage))
-	// 同步ack，更新session --> [userid]chan
-	case 2:
-		s.ack(retD[1].(uint64), stream, die)
-		s.send(stream, retD[0].(protobuff.RawMessage))
-	}
 }
 
 /************************实现ClusterServiceClient接口*************************/
@@ -93,17 +46,23 @@ func (s *Service) Router(stream pb.ClusterService_RouterServer) error {
 		close(die)
 	}()
 	recvChan := s.recv(stream, die)
+	ack := &ServiceAck{
+		Stream:  stream,
+		Die:     die,
+		Service: s,
+	}
 	for {
 		select {
 		case data, ok := <-recvChan:
 			if !ok {
 				return nil
 			}
-			msg, err := s.manager.Deserialize(data.Data)
+			msg, err := s.Manager.Deserialize(data.Data)
 			if err == nil {
-				logger.Debug("cluster service {%s} recv {%d:%v}", s.name,
+				logger.Debug("cluster service {%s} recv {%d:%v}", s.Name,
 					msg.MsgId, msg.MsgData)
-				s.Exec(stream, msg, die)
+				// 异步路由
+				s.Manager.Router(msg, ack)
 			}
 		// 收到关闭信号
 		case <-die:
@@ -113,19 +72,19 @@ func (s *Service) Router(stream pb.ClusterService_RouterServer) error {
 }
 
 func (s *Service) send(stream pb.ClusterService_RouterServer, data protobuff.RawMessage) error {
-	dataNew, err := s.manager.Serialize(data)
+	dataNew, err := s.Manager.Serialize(data)
 	if err != nil {
-		logger.Error("cluster service {%s} Serialize error : %v", s.name, err)
+		logger.Error("cluster service {%s} Serialize error : %v", s.Name, err)
 		return err
 	}
 	sendM := &pb.Message{
 		Data: dataNew,
 		Id:   uint32(data.MsgId),
 	}
-	logger.Debug("cluster service {%s} ack {%d:%v}", s.name,
+	logger.Debug("cluster service {%s} ack {%d:%v}", s.Name,
 		sendM.Id, sendM.Data)
 	if err := stream.Send(sendM); err != nil {
-		logger.Error("cluster service {%s} send error: %v", s.name, err)
+		logger.Error("cluster service {%s} send error: %v", s.Name, err)
 		return err
 	}
 	return nil
@@ -141,12 +100,12 @@ func (s *Service) recv(stream pb.ClusterService_RouterServer, die chan struct{})
 				return
 			}
 			if err != nil {
-				logger.Error("cluster service {%s} recv error : %v", s.name, err)
+				logger.Error("cluster service {%s} recv error : %v", s.Name, err)
 				return
 			}
 			select {
 			case recvChan <- in:
-				logger.Debug("cluster service {%s} recv {%d:%v} : %v", s.name,
+				logger.Debug("cluster service {%s} recv {%d:%v}", s.Name,
 					in.Id, in.Data)
 			case <-die:
 			}
@@ -155,20 +114,35 @@ func (s *Service) recv(stream pb.ClusterService_RouterServer, die chan struct{})
 	return recvChan
 }
 
-func (s *Service) ack(id uint64, stream pb.ClusterService_RouterServer, die chan struct{}) {
-	sendch := make(chan protobuff.RawMessage, 512)
-	Register(id, sendch)
+func (s *Service) ack(id uint64, sack *ServiceAck) {
+	sack.SendCh = make(chan protobuff.RawMessage, 512)
+	Register(id, sack)
 	go func() {
-		defer close(sendch)
+		defer close(sack.SendCh)
 		for {
 			select {
-			case data := <-sendch:
-				if err := s.send(stream, data); err != nil {
-					logger.Error("cluster service {%s} ack error {%v}", s.name, err)
+			case data := <-sack.SendCh:
+				if err := s.send(sack.Stream, data); err != nil {
+					logger.Error("cluster service {%s} ack error {%v}", s.Name, err)
 					return
 				}
-			case <-die:
+			case <-sack.Die:
 			}
 		}
 	}()
+}
+
+/***********************************实现Iack接口************************************/
+
+func (s *ServiceAck) Ack(data []interface{}) {
+	switch len(data) {
+	// 同步ack
+	case 1:
+		s.Service.send(s.Stream, data[0].(protobuff.RawMessage))
+	// 同步ack，更新session --> [userid]chan
+	case 2:
+		s.Service.ack(data[1].(uint64), s)
+		s.UserData = data[1].(uint64)
+		s.Service.send(s.Stream, data[0].(protobuff.RawMessage))
+	}
 }

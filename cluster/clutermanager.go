@@ -41,7 +41,6 @@ type instance struct {
 type cservice struct {
 	Name     string
 	Instance []instance
-	MsgId    []int
 }
 
 type cluster struct {
