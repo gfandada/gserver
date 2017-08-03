@@ -61,10 +61,8 @@ func (s *Service) Router(stream pb.ClusterService_RouterServer) error {
 			if err == nil {
 				logger.Debug("cluster service {%s} recv {%d:%v}", s.Name,
 					msg.MsgId, msg.MsgData)
-				// 异步路由
 				s.Manager.Router(msg, ack)
 			}
-		// 收到关闭信号
 		case <-die:
 		}
 	}
@@ -136,10 +134,10 @@ func (s *Service) ack(id uint64, sack *ServiceAck) {
 
 func (s *ServiceAck) Ack(data []interface{}) {
 	switch len(data) {
-	// 同步ack
+	// ack自己
 	case 1:
 		s.Service.send(s.Stream, data[0].(protobuff.RawMessage))
-	// 同步ack，更新session --> [userid]chan
+	// ack自己，更新session --> [userid]chan
 	case 2:
 		s.Service.ack(data[1].(uint64), s)
 		s.UserData = data[1].(uint64)
