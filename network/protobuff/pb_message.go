@@ -74,7 +74,7 @@ func (msgManager *MsgManager) Serialize(rawM RawMessage) ([]byte, error) {
 		}
 		data, err := proto.Marshal(rawM.MsgData.(proto.Message))
 		if err != nil {
-			return nil, nil
+			return nil, err
 		}
 		c := make([]byte, 2+len(data))
 		copy(c, rawId)
