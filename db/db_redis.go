@@ -1,7 +1,6 @@
 package db
 
 import (
-	"errors"
 	"time"
 
 	"github.com/garyburd/redigo/redis"
@@ -36,6 +35,7 @@ const (
 type Cache struct {
 	pool *redis.Pool // 连接池
 	key  string      // 用于记录redis中所有的key
+	conn redis.Conn
 }
 
 type Redis struct {
@@ -57,7 +57,8 @@ type Ret struct {
 	Value interface{}
 }
 
-type callback func() ([]*Ret, int)
+type checkback func() (int, error)
+type execback func()
 
 // 新建redis-pool
 func NewRedis(redisCfg Redis) *Cache {
@@ -127,28 +128,26 @@ func (cache *Cache) Do(commandName string, args ...interface{}) (reply interface
 }
 
 // 事务封装
-func (cache *Cache) Transaction(call callback, key ...string) (code int, err error) {
+func (cache *Cache) Transaction(check checkback, exec execback, key ...string) (code int, err error) {
+	cache.conn = cache.pool.Get()
+	defer cache.conn.Close()
+	cache.conn.Send("WATCH", key)
+	ecode, err := check()
+	if err != nil {
+		cache.conn.Send("UNWATCH")
+		return ecode, err
+	}
+	cache.conn.Send("MULTI")
+	exec()
+	_, err = cache.conn.Do("EXEC")
+	return 0, err
+}
+
+// send
+func (cache *Cache) Send(commandName string, args ...interface{}) error {
 	conn := cache.pool.Get()
 	defer conn.Close()
-	conn.Send("WATCH", key)
-	ret, errcode := call()
-	if ret == nil {
-		conn.Send("UNWATCH")
-		return errcode, errors.New("call return err")
-	}
-	conn.Send("MULTI")
-	for _, v := range ret {
-		//		switch v.Type {
-		//		case "HSET":
-		//		case "PUT":
-		//		}
-		if conn.Send("HSET", v.Table, v.Key, v.Value) != nil {
-			conn.Send("DISCARD")
-			break
-		}
-	}
-	_, err = conn.Do("EXEC")
-	return 0, err
+	return conn.Send(commandName, args...)
 }
 
 // 获取指定key
@@ -268,6 +267,20 @@ func (cache *Cache) Delete(key string) error {
 // 检查指定key是否存在
 func (cache *Cache) IsExist(key string) bool {
 	v, err := redis.Bool(cache.Do("EXISTS", key))
+	if err != nil {
+		return false
+	}
+	if !v {
+		if _, err = cache.Do("HDEL", cache.key, key); err != nil {
+			return false
+		}
+	}
+	return v
+}
+
+// 检查指定key是否存在(hash表)
+func (cache *Cache) IsExistHash(key, filed string) bool {
+	v, err := redis.Bool(cache.Do("HEXISTS", key, filed))
 	if err != nil {
 		return false
 	}

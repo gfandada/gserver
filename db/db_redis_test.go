@@ -181,29 +181,46 @@ func Test_redis(t *testing.T) {
 	//	fmt.Println(v)
 	//	bm.Do("DISCARD")
 	//	fmt.Println(bm.Do("EXEC"))
+	//	bm.Transaction(func() ([]*Ret, int) {
+	//		ret := []*Ret{}
+	//		ret = append(ret, &Ret{
+	//			Table: "hehe",
+	//			Key:   "age",
+	//			Value: 123 - 20,
+	//		})
+	//		ret = append(ret, &Ret{
+	//			Table: "hehe",
+	//			Key:   "name",
+	//			Value: "fanlin",
+	//		})
+	//		ret = append(ret, &Ret{
+	//			Table: "hehe",
+	//			Key:   "num",
+	//			Value: 123,
+	//		})
+	//		ret = append(ret, &Ret{
+	//			Table: "hehe",
+	//			Key:   2,
+	//			Value: 123,
+	//		})
+	//		return ret, 0
+	//	}, "hehe:age", "hehe:name", "hehe:num")
 	bm.Hset("hehe", "age", 123)
-	bm.Transaction(func() ([]*Ret, int) {
-		ret := []*Ret{}
-		ret = append(ret, &Ret{
-			Table: "hehe",
-			Key:   "age",
-			Value: 123 - 20,
-		})
-		ret = append(ret, &Ret{
-			Table: "hehe",
-			Key:   "name",
-			Value: "fanlin",
-		})
-		ret = append(ret, &Ret{
-			Table: "hehe",
-			Key:   "num",
-			Value: 123,
-		})
-		ret = append(ret, &Ret{
-			Table: "hehe",
-			Key:   2,
-			Value: 123,
-		})
-		return ret, 0
-	}, "hehe:age", "hehe:name", "hehe:num")
+	fmt.Println("11111111111111111111", bm.Get("enen1"))
+	bm.Put("enen1", 123, INFINITE)
+	fmt.Println("11111111111111111111", bm.Get("enen1"))
+	//使用封装的事务
+	bm.Transaction(func() (int, error) {
+		// check
+		a, _ := redis.Uint64(bm.Get("enen1"), nil)
+		fmt.Println(a, a > 123)
+		if a > 123 {
+			return 1, fmt.Errorf("eeeee")
+		}
+		return 0, nil
+	}, func() {
+		fmt.Println("11111111111111111111", bm.Get("enen1"))
+		bm.conn.Send("PUT", "enen1", 1234)
+		fmt.Println("11111111111111111111", bm.Get("enen1"))
+	}, "enen1")
 }
