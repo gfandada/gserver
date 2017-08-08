@@ -25,17 +25,19 @@ type WsServer struct {
 	CertFile       string               // wss参数
 	KeyFile        string               // wss参数
 	MsgParser      *MessageParser       // 消息解析器
+	ReadTimeout    int                  // 读超时
 }
 
 type WsHandler struct {
-	MaxConnNum int                  // 最大的连接数
-	MaxMsgLen  int                  // 单消息的最大长度
-	MsgParser  *MessageParser       // 消息解析器
-	PendingNum int                  // 允许的最大的客户端连接的缓冲队列长度
-	Agent      func(*WsConn) Iagent // 客户端代理
-	Upgrader   websocket.Upgrader   // 用于升级http连接
-	Conns      WsConnMap            // WS连接池
-	MutexWG    sync.WaitGroup
+	MaxConnNum  int                  // 最大的连接数
+	MaxMsgLen   int                  // 单消息的最大长度
+	MsgParser   *MessageParser       // 消息解析器
+	PendingNum  int                  // 允许的最大的客户端连接的缓冲队列长度
+	Agent       func(*WsConn) Iagent // 客户端代理
+	Upgrader    websocket.Upgrader   // 用于升级http连接
+	Conns       WsConnMap            // WS连接池
+	ReadTimeout int                  // 读超时
+	MutexWG     sync.WaitGroup
 }
 
 // HTTP路由处理函数
@@ -52,7 +54,7 @@ func (handler *WsHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	conn.SetReadLimit(int64(handler.MaxMsgLen))
-	//	conn.SetReadDeadline(time.Now().Add(pongWait))
+	conn.SetReadDeadline(time.Now().Add(time.Duration(handler.ReadTimeout) * time.Second))
 	//	conn.SetPongHandler(func(string) error { ws.SetReadDeadline(time.Now().Add(pongWait)); return nil })
 	handler.MutexWG.Add(1)
 	defer handler.MutexWG.Done()
@@ -62,13 +64,9 @@ func (handler *WsHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 	wsConn := InitWsConn(conn, handler.PendingNum, handler.MsgParser)
 	agent := handler.Agent(wsConn)
-	// 代理器：接受、反序列化、路由消息
 	agent.Run()
-	// 关闭客户端连接
 	wsConn.Close()
-	// 清理conn池
 	DeleteConn(conn)
-	// 执行上层业务
 	agent.OnClose()
 }
 
@@ -131,6 +129,7 @@ func (server *WsServer) init() net.Listener {
 			HandshakeTimeout: server.HTTPTimeout,
 			CheckOrigin:      func(_ *http.Request) bool { return true },
 		},
+		ReadTimeout: server.ReadTimeout,
 	}
 	server.MsgParser = NewMessageParser()
 	server.MsgParser.SetMsgLen(2, uint32(server.MaxMsgLen), 1)

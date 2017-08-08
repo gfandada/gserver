@@ -19,9 +19,10 @@ type Gate struct {
 	PendingNum       int      // 最大发送队列长度（server -> client）
 	MaxMsgLen        int      // 允许的服务器接收的最大的消息长度
 	MessageProcessor Imessage // 用于消息体的处理
+	ReadTimeout      int      // 读超时
 
-	ServerAddress string // tcp服务地址
-	LenMsgLen     int    // tcp消息长度
+	//	ServerAddress string // tcp服务地址
+	//	LenMsgLen     int    // tcp消息长度
 
 	WsServerAddress string        // websocket服务地址
 	HTTPTimeout     time.Duration // http超时时间
@@ -30,14 +31,15 @@ type Gate struct {
 }
 
 type Agent struct {
-	Conn     Iconn                                     // 套接字套作接口
-	Gate     *Gate                                     // 网关配置数据
-	Stream   map[string]pb.ClusterService_RouterClient // 接受集群数据流
-	UserData interface{}                               // 用户数据
+	Conn      Iconn                                     // 套接字套作接口
+	Gate      *Gate                                     // 网关配置数据
+	Stream    map[string]pb.ClusterService_RouterClient // 接受集群数据流
+	UserData  interface{}                               // 用户数据
+	HeartBeat int                                       // 心跳包次数
 }
 
 // tcp服务器
-var tcpServer *TcpServer
+// var tcpServer *TcpServer
 
 // ws服务器
 var wsServer *WsServer
@@ -47,10 +49,10 @@ var wsServer *WsServer
 // 启动网关
 func (gate *Gate) Run(chClose chan bool) {
 	switch {
-	case tcpServer != nil:
-		tcpServer.Start()
-		<-chClose
-		tcpServer.Close()
+	//	case tcpServer != nil:
+	//		tcpServer.Start()
+	//		<-chClose
+	//		tcpServer.Close()
 	case wsServer != nil:
 		wsServer.Start()
 		<-chClose
@@ -65,15 +67,15 @@ func (gate *Gate) OnInit() {
 		return
 	}
 	switch {
-	case gate.ServerAddress != "":
-		tcpServer = new(TcpServer)
-		tcpServer.ServerAddress = gate.ServerAddress
-		tcpServer.MaxConnNum = gate.MaxConnNum
-		tcpServer.PendingNum = gate.PendingNum
-		tcpServer.Agent = func(conn *Conn) Iagent {
-			arg := &Agent{Conn: conn, Gate: gate}
-			return arg
-		}
+	//	case gate.ServerAddress != "":
+	//		tcpServer = new(TcpServer)
+	//		tcpServer.ServerAddress = gate.ServerAddress
+	//		tcpServer.MaxConnNum = gate.MaxConnNum
+	//		tcpServer.PendingNum = gate.PendingNum
+	//		tcpServer.Agent = func(conn *Conn) Iagent {
+	//			arg := &Agent{Conn: conn, Gate: gate}
+	//			return arg
+	//		}
 	case gate.WsServerAddress != "":
 		wsServer = new(WsServer)
 		wsServer.ServerAddress = gate.WsServerAddress
@@ -87,6 +89,7 @@ func (gate *Gate) OnInit() {
 			arg := &Agent{Conn: conn, Gate: gate}
 			return arg
 		}
+		wsServer.ReadTimeout = gate.ReadTimeout
 	}
 }
 
@@ -102,8 +105,8 @@ func (agent *Agent) Run() {
 		logger.Error("agent Run params is nil, %v", agent)
 		return
 	}
-	// 启动集群流监听器
-	agent.recv()
+	die := make(chan struct{}, 1)
+	agent.recv(die)
 	for {
 		msg, err := agent.Conn.ReadMsg()
 		if err != nil {
@@ -113,7 +116,7 @@ func (agent *Agent) Run() {
 		if agent.Gate.MessageProcessor != nil {
 			realMsg, errs := agent.Gate.MessageProcessor.Deserialize(msg)
 			if errs != nil {
-				logger.Error("Deserialize err:%v", errs)
+				logger.Error("deserialize err:%v", errs)
 				break
 			}
 			logger.Debug("agent %v read msg %v", agent, realMsg)
@@ -127,6 +130,7 @@ func (agent *Agent) Run() {
 			}
 		}
 	}
+	die <- struct{}{}
 	logger.Debug("ws agent %d stop %v", util.GetPid(), agent)
 }
 
@@ -138,8 +142,7 @@ func (agent *Agent) OnClose() {
 }
 
 // 接收集群数据
-// FIXME 暂未内置开关槽
-func (agent *Agent) recv() {
+func (agent *Agent) recv(die chan struct{}) {
 	// 初始化集群流
 	streams := cluster.GetRouterStreams()
 	agent.Stream = streams
@@ -162,6 +165,10 @@ func (agent *Agent) recv() {
 					MsgRaw: data.Data,       // data
 				})
 				logger.Debug("cluster service recver {%s} ack client {%v}", key, agent.RemoteAddr())
+				select {
+				case <-die:
+					return
+				}
 			}
 		}
 		go router()
