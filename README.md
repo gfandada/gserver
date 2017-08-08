@@ -1,6 +1,6 @@
 # gserver
 ```
-gen tcp/websocket server base on message
+gen websocket server base on message
 ```
 ### Installation
 ```
