@@ -168,6 +168,7 @@ func (agent *Agent) recv(die chan struct{}) {
 				select {
 				case <-die:
 					return
+				default:
 				}
 			}
 		}
