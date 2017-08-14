@@ -12,6 +12,7 @@ var (
 	_mysql *sql.DB
 )
 
+// 配置
 type Mysql struct {
 	User         string
 	Password     string
@@ -49,21 +50,47 @@ func CloseMysql() {
 	_mysql.Close()
 }
 
+// 获取一个mysql实例
 func GetMysql() *sql.DB {
 	return _mysql
 }
 
 /****************************非事务操作********************************/
 
-// FIXME 使用后请手动rows.Close()
-func Query(query string, args ...interface{}) (*sql.Rows, error) {
-	return GetMysql().Query(query, args...)
-}
-
 func execute(sqlStr string, args ...interface{}) (sql.Result, error) {
 	return GetMysql().Exec(sqlStr, args...)
 }
 
+func Query(queryStr string, args ...interface{}) (map[int]map[string]string, error) {
+	query, err := GetMysql().Query(queryStr, args...)
+	results := make(map[int]map[string]string)
+	if err != nil {
+		return results, err
+	}
+	defer query.Close()
+	cols, _ := query.Columns()
+	values := make([][]byte, len(cols))
+	scans := make([]interface{}, len(cols))
+	for i := range values {
+		scans[i] = &values[i]
+	}
+	i := 0
+	for query.Next() {
+		if err := query.Scan(scans...); err != nil {
+			return results, err
+		}
+		row := make(map[string]string)
+		for k, v := range values {
+			key := cols[k]
+			row[key] = string(v)
+		}
+		results[i] = row
+		i++
+	}
+	return results, nil
+}
+
+// 更新
 func Update(updateStr string, args ...interface{}) (int64, error) {
 	result, err := execute(updateStr, args...)
 	if err != nil {
@@ -73,6 +100,7 @@ func Update(updateStr string, args ...interface{}) (int64, error) {
 	return affect, err
 }
 
+// 插入
 func Insert(insertStr string, args ...interface{}) (int64, error) {
 	result, err := execute(insertStr, args...)
 	if err != nil {
@@ -83,6 +111,7 @@ func Insert(insertStr string, args ...interface{}) (int64, error) {
 
 }
 
+// 删除
 func Delete(deleteStr string, args ...interface{}) (int64, error) {
 	result, err := execute(deleteStr, args...)
 	if err != nil {
@@ -98,6 +127,11 @@ type MysqlTransaction struct {
 	SQLTX *sql.Tx
 }
 
+func (t *MysqlTransaction) execute(sqlStr string, args ...interface{}) (sql.Result, error) {
+	return t.SQLTX.Exec(sqlStr, args...)
+}
+
+// 开启事务
 func Begin() (*MysqlTransaction, error) {
 	var trans = &MysqlTransaction{}
 	var err error
@@ -107,24 +141,47 @@ func Begin() (*MysqlTransaction, error) {
 	return trans, err
 }
 
+// 终止事务
 func (t *MysqlTransaction) Rollback() error {
 	return t.SQLTX.Rollback()
 }
 
+// 提交事务
 func (t *MysqlTransaction) Commit() error {
 	return t.SQLTX.Commit()
 }
 
-func (t *MysqlTransaction) execute(sqlStr string, args ...interface{}) (sql.Result, error) {
-	return t.SQLTX.Exec(sqlStr, args...)
+// 查询
+func (t *MysqlTransaction) Query(queryStr string, args ...interface{}) (map[int]map[string]string, error) {
+	query, err := t.SQLTX.Query(queryStr, args...)
+	results := make(map[int]map[string]string)
+	if err != nil {
+		return results, err
+	}
+	defer query.Close()
+	cols, _ := query.Columns()
+	values := make([][]byte, len(cols))
+	scans := make([]interface{}, len(cols))
+	for i := range values {
+		scans[i] = &values[i]
+	}
+	i := 0
+	for query.Next() {
+		if err := query.Scan(scans...); err != nil {
+			return results, err
+		}
+		row := make(map[string]string)
+		for k, v := range values {
+			key := cols[k]
+			row[key] = string(v)
+		}
+		results[i] = row
+		i++
+	}
+	return results, nil
 }
 
-// FIXME 使用后请手动rows.Close()
-func (t *MysqlTransaction) Query(queryStr string, args ...interface{}) (*sql.Rows, error) {
-	rows, err := t.SQLTX.Query(queryStr, args...)
-	return rows, err
-}
-
+// 更新
 func (t *MysqlTransaction) Update(updateStr string, args ...interface{}) (int64, error) {
 	result, err := t.execute(updateStr, args...)
 	if err != nil {
@@ -134,6 +191,7 @@ func (t *MysqlTransaction) Update(updateStr string, args ...interface{}) (int64,
 	return affect, err
 }
 
+// 插入
 func (t *MysqlTransaction) Insert(insertStr string, args ...interface{}) (int64, error) {
 	result, err := t.execute(insertStr, args...)
 	if err != nil {
@@ -144,6 +202,7 @@ func (t *MysqlTransaction) Insert(insertStr string, args ...interface{}) (int64,
 
 }
 
+// 删除
 func (t *MysqlTransaction) Delete(deleteStr string, args ...interface{}) (int64, error) {
 	result, err := t.execute(deleteStr, args...)
 	if err != nil {

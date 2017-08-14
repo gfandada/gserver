@@ -86,16 +86,17 @@ func Test_mysql(t *testing.T) {
 		MaxOpenConns: 16,
 		MaxIdleConns: 4,
 	})
-	a, _ := Query("SELECT * FROM userinfo where uid=3")
-	for a.Next() {
-		var uid int
-		var username string
-		var department string
-		var created string
-		a.Scan(&uid, &username, &department, &created)
-		fmt.Println("非事务查询", uid, username, department, created)
+	ret, err := Query("SELECT * FROM userinfo where uid=5")
+	if err != nil {
+		t.Error(err)
+		return
 	}
-	a.Close()
+	for k := range ret {
+		fmt.Println("第", k, "行")
+		for v := range ret[k] {
+			fmt.Println(v, ret[k][v])
+		}
+	}
 	fmt.Println(Update("update userinfo set username=? where uid=?", "fanlin", 3))
 	fmt.Println(Delete("delete  from userinfo where uid=?", 3))
 	fmt.Println(Insert("insert into userinfo(username,departname) values(?,?)",
@@ -104,20 +105,59 @@ func Test_mysql(t *testing.T) {
 	trans, err := Begin()
 	if err != nil {
 		t.Error(err)
+		return
 	}
-	rows, err := trans.Query("SELECT * FROM userinfo")
-	var uid int
-	var username string
-	var department string
-	var created string
-	for rows.Next() {
-		rows.Scan(&uid, &username, &department, &created)
-		fmt.Println("事务查询", uid, username, department, created)
+	ret1, err := trans.Query("SELECT * FROM userinfo")
+	if err != nil {
+		t.Error(err)
+		return
 	}
-	rows.Close()
+	for k := range ret1 {
+		fmt.Println("事务查询第", k, "行")
+		for v := range ret1[k] {
+			fmt.Println(v, ret1[k][v])
+		}
+	}
 	if err != nil {
 		trans.Rollback()
 	} else {
 		trans.Commit()
 	}
+
+	// 来试试事务更新
+	trans1, err1 := Begin()
+	if err1 != nil {
+		t.Error(err1)
+		return
+	}
+	ret2, err := trans1.Query("SELECT * FROM userinfo where uid=59")
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	if len(ret2) != 1 {
+		t.Errorf("1111111")
+		trans.Rollback()
+		return
+	}
+	fmt.Println(ret2[0]["created"])
+	// 条件不满足不更新
+	//	if ret2[0]["created"] != "" {
+	//		t.Errorf("222222")
+	//		trans1.Rollback()
+	//		return
+	//	}
+	// 更新
+	id, err := trans1.Update("UPDATE userinfo SET created=?", "2000-12-12")
+	if err != nil {
+		t.Errorf("333333")
+		trans1.Rollback()
+		return
+	}
+	fmt.Println(id)
+
+	// 正常提交
+	// trans1.Commit()
+	// 测试回滚
+	trans1.Rollback()
 }
