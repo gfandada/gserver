@@ -40,4 +40,5 @@ const version = "0.1.3"
     v0.1.4将要实现的特性：
 	优化cluster数据流
 	二次封装inner panic
+	持久化定时器任务
 **/
