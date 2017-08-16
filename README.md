@@ -18,7 +18,7 @@ go get github.com/go-sql-driver/mysql
 ```
 1.optimize handler exec loop - DONE
 2.optimize conn pool - DONE
-3.optimize inner panic - DONE
+3.optimize inner panic
 4.storage timer job base on gentimer
 5.romote rpc for cluster - DONE
 ```
