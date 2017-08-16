@@ -1,7 +1,7 @@
 // 用于记录gserver库的变更历史
 package gserver
 
-const version = "0.1.1"
+const version = "0.1.3"
 
 /***
 	v0.1.0实现的特性：
@@ -17,14 +17,26 @@ const version = "0.1.1"
 **/
 
 /***
-	v0.1.2将要实现的特性：
-	gservices包：封装gentimer， - FIXED
-			 genevent 
-	util包：引入唯一id  - FIXED
-	network: 整理会话池 - FIXED
-	loader: 配置装载器 - FIXED
-	整理目录结构，引入glog - FIXED
-	支持redis - FIXED
-	去掉glog，引入seelog - FIXED
+	v0.1.2实现的特性：
+	gservices包：封装gentimer 
+	util包：引入唯一id
+	network: 整理会话池
+	loader: 配置装载器
+	logger: 支持持久化日志
+	db: 支持redis
 **/
 
+/***
+    v0.1.3实现的特性：
+	cluster包：封装了集群的相关操作，基于grpc stream
+	connpool包：封装了线程安全的连接池
+	network包：支持cluster，暂时屏蔽tcp-server
+	loader包：新增xlsx解析器
+	util包：新增权重算法
+**/
+
+/***
+    v0.1.4将要实现的特性：
+	优化cluster数据流
+	二次封装inner panic
+**/
