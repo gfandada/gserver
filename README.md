@@ -1,7 +1,7 @@
 # gserver
 ```
-This project aims to provide a solution for **real-time message flow**. You can create **GameServer** or others, with gserver.
-The communication protocol is based on **Websocket**.
+This project aims to provide a solution for real-time message flow. You can create GameServer or others, with gserver.
+The communication protocol is based on Websocket.
 ```
 ### Installation
 ```
@@ -17,8 +17,8 @@ go get github.com/go-sql-driver/mysql
 ```
 ### TODO
 ```
-current version is **v0.1.3**
-**next version-v0.1.4** will focus on:
+current version is v0.1.3
+next version-v0.1.4 will focus on:
 1.optimize cluster data flow
 2.optimize inner panic
 3.storage timer job base on gentimer
