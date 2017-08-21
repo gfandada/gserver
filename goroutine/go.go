@@ -2,14 +2,12 @@ package goroutine
 
 import (
 	"errors"
-	"sync"
 	"time"
 
 	"github.com/gfandada/gserver/util"
 )
 
 type Goroutine struct {
-	sync.Mutex
 	ChanSend    chan []interface{} // 发送通道
 	ChanRecv    chan []interface{} // 接收通道
 	ChanControl chan struct{}      // 内置的控制通道
