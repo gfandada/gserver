@@ -12,6 +12,7 @@ func Run(mods ...module.Imodule) {
 }
 
 // 启动日志
+// path: 日志配置文件
 func RunLogger(path string) {
 	logger.Start(path)
 }

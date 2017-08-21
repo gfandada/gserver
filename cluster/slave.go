@@ -57,6 +57,9 @@ func (s *Service) Router(stream pb.ClusterService_RouterServer) error {
 			if !ok {
 				return nil
 			}
+			if data.Id == CLOSEF && len(data.Data) <= 0 {
+				return nil
+			}
 			msg, err := s.Manager.Deserialize(data.Data)
 			if err == nil {
 				logger.Debug("cluster service {%s} recv {%d:%v}", s.Name,
@@ -64,6 +67,7 @@ func (s *Service) Router(stream pb.ClusterService_RouterServer) error {
 				s.Manager.Router(msg, ack)
 			}
 		case <-die:
+			return nil
 		}
 	}
 	return nil
@@ -106,6 +110,7 @@ func (s *Service) recv(stream pb.ClusterService_RouterServer, die chan struct{})
 				logger.Debug("cluster service {%s} recv {%d:%v}", s.Name,
 					in.Id, in.Data)
 			case <-die:
+				return
 			}
 		}
 	}()
@@ -125,6 +130,9 @@ func (s *Service) ack(id uint64, sack *ServiceAck) {
 					return
 				}
 			case <-sack.Die:
+				logger.Error("cluster service {%s} recv close message", s.Name)
+				Unregister(id)
+				return
 			}
 		}
 	}()

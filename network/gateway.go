@@ -130,6 +130,11 @@ func (agent *Agent) Run() {
 			}
 		}
 	}
+	if agent.Stream["game"] != nil {
+		agent.Stream["game"].Send(&pb.Message{
+			Id: cluster.CLOSEF,
+		})
+	}
 	die <- struct{}{}
 	logger.Debug("ws agent %d stop %v", util.GetPid(), agent)
 }

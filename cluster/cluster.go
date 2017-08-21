@@ -6,6 +6,11 @@ import (
 	"google.golang.org/grpc/metadata"
 )
 
+const (
+	CLOSEF = iota // 前端流关闭
+	CLOSEB        // 后端流关闭
+)
+
 // 获取一个指定服务的路由流
 func GetRouterStream(service string) pb.ClusterService_RouterClient {
 	conn := GetService(service)
