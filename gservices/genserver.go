@@ -157,7 +157,7 @@ func (server *LocalServer) NewLocalClient() *LocalClient {
 }
 
 // 同步请求rpcserver
-// input:请求参数  timeout:超时时间（2*time.Second）
+// input:请求参数  timeout:超时时间（秒）
 // FIXME 调用前需要先注册
 func (client *LocalClient) Call(input *InputMessage, timeout int) (*OutputMessage, error) {
 	client.Server.MessageBoxChan <- input
