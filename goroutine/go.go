@@ -18,10 +18,10 @@ type Goroutine struct {
 // @params igo：携程的装载器  async：true异步 false同步
 // @return 携程id
 func Start(igo Igo, async bool) (uint64, error) {
-	var pid uint64
+	done := make(chan uint64, 1)
 	loop := func() {
-		pid1, v := initGo(igo)
-		pid = pid1
+		pid, v := initGo(igo)
+		done <- pid
 		defer closeGo(pid, igo, v)
 		for {
 			select {
@@ -42,7 +42,7 @@ func Start(igo Igo, async bool) (uint64, error) {
 		}
 	}
 	go loop()
-	time.Sleep(time.Duration(50) * time.Microsecond)
+	pid := <-done
 	if pid != 0 {
 		return pid, nil
 	}
