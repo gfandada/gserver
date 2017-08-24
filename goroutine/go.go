@@ -1,3 +1,5 @@
+// 适用于非服务型携程
+// 服务型携程请使用genservice/genserver.go
 package goroutine
 
 import (
