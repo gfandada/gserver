@@ -3,53 +3,91 @@ package goroutine
 import (
 	"fmt"
 	"testing"
+	"time"
 )
 
 func Test_go(t *testing.T) {
-	pid, err := Start(new(TestGo), true)
+	pid, err := Start(new(Test))
 	if err != nil {
 		t.Error(err)
+		return
 	}
-	//Stop(pid)
-	Cast(pid, []interface{}{0001, "gfandada1", "coding"})
-	Cast(pid, []interface{}{0002, "gfandada2", "coding"})
-	fmt.Println(Count())
-	Stop(pid)
-	fmt.Println(Count())
-	Cast(pid, []interface{}{0003, "gfandada3", "coding"})
-	//Stop(pid)
-	fmt.Println(Count())
-	Start(new(TestGo), true)
-	Start(new(TestGo), true)
-	Start(new(TestGo), true)
-	fmt.Println(Count())
-	pid, err = Start(new(TestGo), false)
-	if err != nil {
-		t.Error(err)
+	go Cast(pid, "+", []interface{}{1, 2})
+	add := func() {
+		ret, err := Call(pid, "+", []interface{}{1, 2}, 2)
+		if err != nil {
+			fmt.Println(err.Error())
+			t.Error(err)
+			return
+		}
+		fmt.Println("1 + 2 = ", ret[0])
+		if ret[0] != 3 {
+			t.Errorf("1 + 2 != 3 ?????????????")
+			return
+		}
 	}
-	ret, err1 := Call(pid, []interface{}{0004, "gfandada4", "coding"}, 1)
-	if err == nil {
-		fmt.Println("同步调用", ret)
-	} else {
-		t.Error(err1)
+	go add()
+	sub := func() {
+		ret, err := Call(pid, "-", []interface{}{1, 2}, 2)
+		if err != nil {
+			fmt.Println(err.Error())
+			t.Error(err)
+			return
+		}
+		fmt.Println("1 - 2 = ", ret[0])
+		if ret[0] != -1 {
+			t.Errorf("1 - 2 != -1 ?????????????")
+			return
+		}
+	}
+	go sub()
+	mul := func() {
+		ret, err := Call(pid, "*", []interface{}{1, 2}, 2)
+		if err != nil {
+			fmt.Println(err.Error())
+			t.Error(err)
+			return
+		}
+		fmt.Println("1 * 2 = ", ret[0])
+		if ret[0] != 2 {
+			t.Errorf("1 * 2 != 2 ?????????????")
+			return
+		}
+	}
+	go mul()
+	time.Sleep(2e9)
+}
+
+/*****************************实现进程装载器********************************/
+
+type Test struct {
+}
+
+func (t *Test) name() string {
+	return ""
+}
+
+func (t *Test) initGo() {
+	fmt.Println("init..............")
+}
+
+func (t *Test) handler(msg string, args []interface{}, ret chan []interface{}) {
+	// 异步的嘛
+	if ret == nil {
+		//...........do something...........
+		return
+	}
+	// 同步的嘛
+	switch msg {
+	case "+":
+		ret <- []interface{}{args[0].(int) + args[1].(int)}
+	case "-":
+		ret <- []interface{}{args[0].(int) - args[1].(int)}
+	case "*":
+		ret <- []interface{}{args[0].(int) * args[1].(int)}
 	}
 }
 
-type TestGo struct {
-}
-
-func (*TestGo) initGo() {
-	fmt.Println("【init】welcome to gs, you can contact gfandada@gmail.com")
-}
-
-func (*TestGo) closeGo() {
-	fmt.Println("【close】welcome to gs, you can contact gfandada@gmail.com")
-}
-
-func (*TestGo) handler(input []interface{}) []interface{} {
-	id := input[0].(int)
-	name := input[1].(string)
-	job := input[2].(string)
-	fmt.Printf("【handler】用户%s(%d)从事%s工作\n", name, id, job)
-	return []interface{}{"gfandada@gmail.com"}
+func (t *Test) closeGo() {
+	fmt.Println("close..............")
 }

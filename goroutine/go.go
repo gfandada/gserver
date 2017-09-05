@@ -1,25 +1,38 @@
-// 适用于非服务型携程
-// 服务型携程请使用genservice/genserver.go
+/***
+	可被管理的轻量级进程服务，作用域是进程内
+	进程特性：
+	1 通过name/id作为唯一标识[id是进程的唯一标识，name是进程别名]
+	2 可以方便的向指定进程发送消息
+	3 进程间的消息分两类：业务消息和控制消息
+	4 业务能力由进程自定义，控制消息目前只支持停止stop
+	5 进程间没有直接或者间接联系，没有实现link机制
+***/
 package goroutine
 
 import (
 	"errors"
+	"fmt"
 	"time"
 
+	"github.com/gfandada/gserver/logger"
 	"github.com/gfandada/gserver/util"
 )
 
 type Goroutine struct {
-	ChanSend    chan []interface{} // 发送通道
-	ChanRecv    chan []interface{} // 接收通道
-	ChanControl chan struct{}      // 内置的控制通道
-	Pending     int                // 排队的消息数量
+	chanMsg     chan *message // 消息异步通道
+	chanControl chan struct{} // 内置的控制通道
 }
 
-// 新建并运行一个本地携程
-// @params igo：携程的装载器  async：true异步 false同步
-// @return 携程id
-func Start(igo Igo, async bool) (uint64, error) {
+type message struct {
+	chanRecv chan []interface{} // 接受消息
+	msg      string             // 消息标识
+	args     []interface{}      // 消息参数
+}
+
+// 新建并运行一个本地进程
+// @params igo：进程的装载器
+// @return 携程id，错误描述
+func Start(igo Igo) (uint64, error) {
 	done := make(chan uint64, 1)
 	loop := func() {
 		pid, v := initGo(igo)
@@ -27,18 +40,12 @@ func Start(igo Igo, async bool) (uint64, error) {
 		defer closeGo(pid, igo, v)
 		for {
 			select {
-			case input := <-v.ChanSend:
+			case input := <-v.chanMsg:
 				if input == nil {
-					v.Pending--
 					break
 				}
-				output := igo.handler(input)
-				if !async {
-					v.ChanRecv <- output
-				}
-				v.Pending--
-			// 暂不开放更多的携程控制权限
-			case <-v.ChanControl:
+				handler(igo, input)
+			case <-v.chanControl:
 				return
 			}
 		}
@@ -51,68 +58,121 @@ func Start(igo Igo, async bool) (uint64, error) {
 	return 0, errors.New("create goroutine failed")
 }
 
-// 停止指定携程
-// id: 携程的pid
-func Stop(id uint64) {
+// 通过id停止指定进程
+// @params id: 进程id
+func StopById(id uint64) (err error) {
 	defer func() {
-		recover()
+		if r := recover(); r != nil {
+			err = fmt.Errorf("%v", r)
+		}
 	}()
-	v := Query(id)
+	v := QueryById(id)
 	if v != nil {
-		v.(*Goroutine).ChanControl <- struct{}{}
+		v.chanControl <- struct{}{}
 	}
+	return
+}
+
+// 通过别名停止指定进程
+// @params name: 进程别名
+func StopByName(name string) (err error) {
+	defer func() {
+		if r := recover(); r != nil {
+			err = fmt.Errorf("%v", r)
+		}
+	}()
+	v := QueryByName(name)
+	if v != nil {
+		v.chanControl <- struct{}{}
+	}
+	return
 }
 
 // 同步请求
-// input:请求参数  timeout:超时时间（秒）
-func Call(pid uint64, input []interface{}, timeout int) ([]interface{}, error) {
-	defer func() {
-		recover()
-	}()
-	v := Query(pid)
-	if v == nil {
-		return nil, errors.New("goroutine is not exist")
+// @params pid:进程id msg:请求消息 args:消息参数 timeout:超时时间（秒）
+// @return 请求结果，错误描述
+func Call(pid uint64, msg string, args []interface{}, timeout int) ([]interface{}, error) {
+	var err error
+	msgS := &message{
+		chanRecv: make(chan []interface{}, 1),
+		msg:      msg,
+		args:     args,
 	}
-	g := v.(*Goroutine)
-	g.ChanSend <- input
+	defer func() {
+		if r := recover(); r != nil {
+			err = fmt.Errorf("%v", r)
+		}
+		close(msgS.chanRecv)
+	}()
+	v := QueryById(pid)
+	if v == nil {
+		err = errors.New("goroutine is not exist")
+		return nil, err
+	}
+	v.chanMsg <- msgS
 	select {
-	case ret := <-g.ChanRecv:
-		return ret, nil
+	case ret := <-msgS.chanRecv:
+		return ret, err
 	case <-time.After(time.Duration(timeout) * time.Second):
-		return nil, errors.New("time out")
+		return nil, errors.New("call time out")
 	}
 }
 
 // 异步请求
-func Cast(pid uint64, input []interface{}) error {
+// @params pid:进程id msg:请求消息 args:消息参数
+// @return 错误描述
+func Cast(pid uint64, msg string, args []interface{}) error {
+	var err error
 	defer func() {
-		recover()
+		if r := recover(); r != nil {
+			err = fmt.Errorf("%v", r)
+		}
 	}()
-	v := Query(pid)
+	v := QueryById(pid)
 	if v == nil {
 		return errors.New("goroutine is not exist")
 	}
-	g := v.(*Goroutine)
-	g.ChanSend <- input
+	v.chanMsg <- &message{
+		msg:  msg,
+		args: args,
+	}
 	return nil
+}
+
+// 获取排队消息数量
+// @params pid:进程id
+// @return 排队消息数量
+func Pending(pid uint64) int {
+	v := QueryById(pid)
+	if v == nil {
+		return 0
+	}
+	return len(v.chanMsg)
 }
 
 func initGo(igo Igo) (uint64, *Goroutine) {
 	id := util.GetPid()
 	v := &Goroutine{
-		ChanSend:    make(chan []interface{}, 1),
-		ChanRecv:    make(chan []interface{}, 1),
-		ChanControl: make(chan struct{}, 1),
+		chanMsg:     make(chan *message, 10000),
+		chanControl: make(chan struct{}, 1),
 	}
-	Register(id, v)
+	Register(id, igo.name(), v)
 	igo.initGo()
 	return id, v
 }
 
 func closeGo(id uint64, igo Igo, v *Goroutine) {
-	Unregister(id)
-	close(v.ChanControl)
-	close(v.ChanRecv)
-	close(v.ChanSend)
+	Unregister(id, igo.name())
+	close(v.chanControl)
+	close(v.chanMsg)
 	igo.closeGo()
+}
+
+func handler(igo Igo, input *message) {
+	defer func() {
+		if r := recover(); r != nil {
+			logger.Error("goroutine handler panic input %v error: %v", input, r)
+		}
+	}()
+	igo.handler(input.msg, input.args, input.chanRecv)
 }
