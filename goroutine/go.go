@@ -150,6 +150,17 @@ func Pending(pid uint64) int {
 	return len(v.chanMsg)
 }
 
+// 检查进程是否存活
+// @params pid:进程id
+// @return true|false
+func IsAlive(pid uint64) bool {
+	v := QueryById(pid)
+	if v == nil {
+		return false
+	}
+	return true
+}
+
 func initGo(igo Igo) (uint64, *Goroutine) {
 	id := util.GetPid()
 	v := &Goroutine{

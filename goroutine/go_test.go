@@ -55,7 +55,8 @@ func Test_go(t *testing.T) {
 		}
 	}
 	go mul()
-	time.Sleep(2e9)
+	time.Sleep(1e9)
+	StopById(pid)
 }
 
 /*****************************实现进程装载器********************************/
@@ -72,6 +73,7 @@ func (t *Test) initGo() {
 }
 
 func (t *Test) handler(msg string, args []interface{}, ret chan []interface{}) {
+	fmt.Println("handler..............")
 	// 异步的嘛
 	if ret == nil {
 		//...........do something...........
