@@ -56,7 +56,11 @@ func Test_go(t *testing.T) {
 	}
 	go mul()
 	time.Sleep(1e9)
-	StopById(pid)
+	if err := StopById(pid); err != nil {
+		t.Error(err)
+		return
+	}
+	StopByName("calc")
 }
 
 /*****************************实现进程装载器********************************/
@@ -65,7 +69,7 @@ type Test struct {
 }
 
 func (t *Test) name() string {
-	return ""
+	return "calc"
 }
 
 func (t *Test) initGo() {
@@ -73,7 +77,7 @@ func (t *Test) initGo() {
 }
 
 func (t *Test) handler(msg string, args []interface{}, ret chan []interface{}) {
-	fmt.Println("handler..............")
+	fmt.Println("handler..............", msg, args)
 	// 异步的嘛
 	if ret == nil {
 		//...........do something...........
