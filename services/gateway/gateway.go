@@ -5,7 +5,6 @@ import (
 	"net"
 	"time"
 
-	Services "../"
 	"../../network"
 	"github.com/gorilla/websocket"
 )
@@ -75,14 +74,5 @@ func (wg *WsGateway) Run(ChClose chan bool) {
 	ws.MaxConnNum = 100
 	ws.Gate = new(WsGateway)
 	ws.MsgParser = network.NewMsgManager()
-	// 注册消息
-	ws.MsgParser.Register(&network.RawMessage{
-		MsgId:   uint16(1002),
-		MsgData: &Services.TouristsLoginReq{},
-	})
-	ws.MsgParser.Register(&network.RawMessage{
-		MsgId:   uint16(1003),
-		MsgData: &Services.TouristsLoginAck{},
-	})
 	ws.Start()
 }

@@ -4,7 +4,6 @@ package service
 import (
 	"net"
 
-	Services "../"
 	"../../network"
 	"google.golang.org/grpc"
 )
@@ -45,14 +44,6 @@ func (s *Service) Run(ChClose chan bool) {
 	ser := grpc.NewServer()
 	ins := new(Agent)
 	ins.msgParser = network.NewMsgManager()
-	ins.msgParser.Register(&network.RawMessage{
-		MsgId:   uint16(1004),
-		MsgData: &Services.CreateRoleReq{},
-	})
-	ins.msgParser.Register(&network.RawMessage{
-		MsgId:   uint16(1005),
-		MsgData: &Services.CreateRoleAck{},
-	})
 	network.RegisterServiceServer(ser, ins)
 	go ser.Serve(lis)
 }

@@ -1,4 +1,4 @@
-package main
+package gserver
 
 import (
 	Module "./module"
