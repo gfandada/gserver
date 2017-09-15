@@ -17,19 +17,13 @@ go get github.com/go-sql-driver/mysql
 ```
 ### TODO
 ```
-current version is v0.1.3
-next version-v0.1.4 will focus on:
-1.optimize cluster data flow
-2.optimize inner panic
-3.storage timer job base on gentimer
+current version is v0.8.0
+next version-v0.9.0 will focus on:
+1.optimize safe
+2.optimize microservice
 ```
-### cluster
-```
-TODO MQ
-```
-![image](https://github.com/gfandada/gserver/blob/master/png/cluster.png)
 ### dataflow
 ```
-TODO go exec
+TODO 待更新
 ```
 ![image](https://github.com/gfandada/gserver/blob/master/png/dataflow.png)
