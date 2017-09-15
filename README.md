@@ -23,7 +23,4 @@ next version-v0.9.0 will focus on:
 2.optimize microservice
 ```
 ### dataflow
-```
-TODO 待更新
-```
 ![image](https://github.com/gfandada/gserver/blob/master/png/dataflow.png)
