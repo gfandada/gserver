@@ -1,0 +1,43 @@
+syntax = "proto2";
+package services;
+
+// 心跳请求0
+message heartbeat_req
+{
+}
+// 心跳回复1
+message heartbeat_ack
+{
+}
+// 通用的错误回复2
+message error_ack
+{
+   required int32   ackid = 1; // ack-id
+   required int32   errid = 2; // 错误码
+}
+// 请求游客登录1002
+message tourists_login_req
+{
+   required string   touristscot = 1;  // 游客账号
+   required string   touristspwd = 2;  // 游客密码
+}
+// 游客登录返回1003
+message tourists_login_ack
+{
+   required string   str = 1;
+}
+
+//创建角色请求1004
+message create_role_req
+{
+    required string icon = 1;
+    //血脉id
+    required uint32 bornId = 2;
+    required string name = 3;
+}
+
+//创建角色返回1005
+message create_role_ack
+{
+    required string   str = 1;
+}

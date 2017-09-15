@@ -1,10 +1,11 @@
-package cluster
+// 基于本地配置的服务发现(no wathing)
+// FIXME 可以使用第三方服务发现快速替换本服务
+package discovery
 
 import (
 	"sync"
 
 	"github.com/gfandada/gserver/loader"
-	"github.com/gfandada/gserver/logger"
 	"github.com/gfandada/gserver/util"
 	"google.golang.org/grpc"
 )
@@ -47,7 +48,6 @@ type cluster struct {
 	Services []cservice
 }
 
-// 初始化
 func Init(path string) {
 	once.Do(func() { _default_pool.init(path) })
 }
@@ -64,7 +64,6 @@ func (p *service_pool) init(path string) {
 	}
 }
 
-//  添加服务
 func (p *service_pool) addService(serviceName, key, value string) {
 	p.mu.Lock()
 	defer p.mu.Unlock()
@@ -72,10 +71,6 @@ func (p *service_pool) addService(serviceName, key, value string) {
 	instance := &service{}
 	if conn, err := grpc.Dial(value, grpc.WithBlock(), grpc.WithInsecure()); err == nil {
 		instance.clients = append(instance.clients, client{key, conn, 0})
-		logger.Info("cluster service added succeed: %s -> %s", key, value)
-		// TODO 回调通知
-	} else {
-		logger.Info("cluster service added error: %s -> %s", key, value)
 	}
 	p.services[serviceName] = instance
 }
@@ -89,14 +84,12 @@ func (p *service_pool) removeService(serviceName, key string) {
 	}
 	service := p.services[serviceName]
 	if service == nil {
-		logger.Error("no such service: %s", serviceName)
 		return
 	}
 	for k := range service.clients {
 		if service.clients[k].key == key {
 			service.clients[k].conn.Close()
 			service.clients = append(service.clients[:k], service.clients[k+1:]...)
-			logger.Info("service removed: %s-%s", serviceName, key)
 			return
 		}
 	}
@@ -117,7 +110,7 @@ func (p *service_pool) get_service(serviceName string) (conn *grpc.ClientConn) {
 	if leng == 0 {
 		return nil
 	}
-	// TODO 先随机吧
+	// rand
 	id := int(util.RandInterval(int32(0), int32(leng-1)))
 	return service.clients[id].conn
 }

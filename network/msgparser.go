@@ -1,229 +1,106 @@
 // 消息解析模块
 package network
 
-import (
-	"encoding/binary"
-	"errors"
-	"fmt"
-	"math"
-
-	"github.com/gfandada/gserver/logger"
-)
-
 /*
-	在网络中传输的消息格式
+	client->gateway
+	----------------------------
+	| len | seq | id | message |
+	----------------------------
+	len:seq + id + message的长度，占用2个字节(uint16)
+	seq:从1自增的序列号，占用4个字节(uint32)
+	id:协议号，占用2个字节(uint16)
+	message:业务数据，占用len-4-2字节，可以使用任意编码：pb/json等
+
+	gateway->client
 	----------------------
 	| len | id | message |
 	----------------------
-	其中len默认为两个字节(1,2,4字节)，len和id(uint16)默认使用网络字节序
+	len:message的长度，占用2个字节(uint16)
+	id:协议号，占用两个字节(uint16)
+	message:业务数据，占用len字节，可以使用任意编码：pb/json等
 */
 
-// 解析器维护的数据结构
+import (
+	"encoding/binary"
+	"errors"
+
+	"../misc"
+	"github.com/gorilla/websocket"
+)
+
 type MessageParser struct {
-	MessageLen    int    // 用来存储数据长度所占的空间：1,2,4字节，defalut=2
-	MaxMessageLen uint32 // 数据最大长度
-	MinMessageLen uint32 // 数据最小长度
-	LittleEndian  bool   // 大小端（网络字节序都是大端模式，x86架构的主机都是小端模式）
+	MaxMessageLen uint16 // 数据最大长度
+	MinMessageLen uint16 // 数据最小长度
+	Buff          []byte // 缓存，防止内存碎片
 }
 
-// 构建一个消息解析器
-func NewMessageParser() *MessageParser {
-	newMsg := new(MessageParser)
-	newMsg.MessageLen = 2
-	newMsg.MinMessageLen = 1
-	newMsg.MaxMessageLen = 1024
-	newMsg.LittleEndian = false
-	return newMsg
+type RawMessage struct {
+	MsgId   uint16
+	MsgData interface{}
+	MsgRaw  []byte // id+data
 }
 
-// 设置参数
-func (msgParser *MessageParser) SetMsgLen(MessageLen int, MaxMessageLen uint32, MinMessageLen uint32) {
-	if MessageLen == 1 || MessageLen == 2 || MessageLen == 4 {
-		msgParser.MessageLen = MessageLen
-	} else {
-		msgParser.MessageLen = 2
-	}
+func NewMessageParser() (newMsg *MessageParser) {
+	newMsg = new(MessageParser)
+	newMsg.MinMessageLen = 0
+	newMsg.MaxMessageLen = 512
+	newMsg.Buff = make([]byte, newMsg.MaxMessageLen+2)
+	return
+}
+
+func (msgParser *MessageParser) SetMsgLen(MaxMessageLen uint16, MinMessageLen uint16) {
 	if MinMessageLen != 0 {
 		msgParser.MinMessageLen = MinMessageLen
 	}
 	if MaxMessageLen != 0 {
 		msgParser.MaxMessageLen = MaxMessageLen
 	}
-	var max uint32
-	switch msgParser.MessageLen {
-	case 1:
-		max = math.MaxUint8
-	case 2:
-		max = math.MaxUint16
-	case 4:
-		max = math.MaxUint32
-	}
-	if msgParser.MinMessageLen > max {
-		msgParser.MinMessageLen = max
-	}
-	if msgParser.MaxMessageLen > max {
-		msgParser.MaxMessageLen = max
-	}
-	logger.Info(fmt.Sprintf("set msgParser: %v", msgParser))
 }
 
-//// tcp读取消息
-//// 通过len将id+message读取出来
-//func (msgParser *MessageParser) Read(conn *Conn) ([]byte, error) {
-//	var b [4]byte
-//	// 先获取id+msg的长度
-//	bufMsgLen := b[:msgParser.MessageLen]
-//	if _, err := io.ReadFull(conn, bufMsgLen); err != nil {
-//		return nil, err
-//	}
-//	// 解析长度数据
-//	var msgLen uint32
-//	switch msgParser.MessageLen {
-//	// 单字节不需要处理大小端模式
-//	case 1:
-//		msgLen = uint32(bufMsgLen[0])
-//	// 多字节需要处理大小端模式
-//	case 2:
-//		if msgParser.LittleEndian {
-//			msgLen = uint32(binary.LittleEndian.Uint16(bufMsgLen))
-//		} else {
-//			msgLen = uint32(binary.BigEndian.Uint16(bufMsgLen))
-//		}
-//	case 4:
-//		if msgParser.LittleEndian {
-//			msgLen = binary.LittleEndian.Uint32(bufMsgLen)
-//		} else {
-//			msgLen = binary.BigEndian.Uint32(bufMsgLen)
-//		}
-//	}
-//	switch {
-//	case msgLen > msgParser.MaxMessageLen:
-//		return nil, errors.New("message too long")
-//	case msgLen < msgParser.MinMessageLen:
-//		return nil, errors.New("message too short")
-//	}
-//	msgData := make([]byte, msgLen)
-//	if _, err := io.ReadFull(conn, msgData); err != nil {
-//		return nil, err
-//	}
-//	return msgData, nil
-//}
-
-//// 写数据
-//// 由于参数是数组的数组，所以要注意调用时，不能有携程正在改变参数
-//func (msgParser *MessageParser) Write(conn *Conn, args ...[]byte) error {
-//	// 获取数据长度
-//	var msgLen uint32
-//	for _, value := range args {
-//		msgLen += uint32(len(value))
-//	}
-//	switch {
-//	case msgLen > msgParser.MaxMessageLen:
-//		return errors.New("message too long")
-//	case msgLen < msgParser.MinMessageLen:
-//		return errors.New("message too short")
-//	}
-//	msg := make([]byte, uint32(msgParser.MessageLen)+msgLen)
-//	// 先写入消息体的长度数据
-//	switch msgParser.MessageLen {
-//	case 1:
-//		msg[0] = byte(msgLen)
-//	case 2:
-//		if msgParser.LittleEndian {
-//			binary.LittleEndian.PutUint16(msg, uint16(msgLen))
-//		} else {
-//			binary.BigEndian.PutUint16(msg, uint16(msgLen))
-//		}
-//	case 4:
-//		if msgParser.LittleEndian {
-//			binary.LittleEndian.PutUint32(msg, msgLen)
-//		} else {
-//			binary.BigEndian.PutUint32(msg, msgLen)
-//		}
-//	}
-//	length := msgParser.MessageLen
-//	for i := 0; i < len(args); i++ {
-//		copy(msg[length:], args[i])
-//		length += len(args[i])
-//	}
-//	conn.Write(msg)
-//	return nil
-//}
-
-// ws读取消息
-// 通过len将id+message读取出来
-func (msgParser *MessageParser) ReadWs(wsConn *WsConn) ([]byte, error) {
-	_, data, err := wsConn.Conn.ReadMessage()
+// 获取body(除header)
+func (msgParser *MessageParser) ReadBody(conn *websocket.Conn) ([]byte, error) {
+	typ, data, err := conn.ReadMessage()
 	if err != nil {
 		return nil, err
 	}
-	// 先获取id+msg的长度
-	bufMsgLen := data[:msgParser.MessageLen]
-	// 解析长度数据
-	var msgLen uint32
-	switch msgParser.MessageLen {
-	case 1:
-		msgLen = uint32(bufMsgLen[0])
-	case 2:
-		if msgParser.LittleEndian {
-			msgLen = uint32(binary.LittleEndian.Uint16(bufMsgLen))
-		} else {
-			msgLen = uint32(binary.BigEndian.Uint16(bufMsgLen))
-		}
-	case 4:
-		if msgParser.LittleEndian {
-			msgLen = binary.LittleEndian.Uint32(bufMsgLen)
-		} else {
-			msgLen = binary.BigEndian.Uint32(bufMsgLen)
-		}
+	if typ != websocket.BinaryMessage {
+		return nil, errors.New("message type error")
 	}
+	size := binary.BigEndian.Uint16(data[:2])
 	switch {
-	case msgLen > msgParser.MaxMessageLen:
+	case uint16(size) > msgParser.MaxMessageLen:
 		return nil, errors.New("message too long")
-	case msgLen < msgParser.MinMessageLen:
+	case uint16(size) < msgParser.MinMessageLen:
 		return nil, errors.New("message too short")
 	}
-	return data[msgParser.MessageLen:], nil
+	return data[2:], nil
+}
+
+// 拆分body数据
+// @return 数据1(序列号)，数据2(协议号)，数据3(协议号+业务数据)，错误描述
+func (msgParser *MessageParser) ReadBodyFull(data []byte) (uint32, uint16, []byte, error) {
+	// 获取序列号
+	reader := misc.Reader(data)
+	seq_id, err1 := reader.ReadU32()
+	if err1 != nil {
+		return 0, 0, nil, errors.New("read seq error")
+	}
+	// 获取协议号
+	id, err2 := reader.ReadU16()
+	if err2 != nil {
+		return 0, 0, nil, errors.New("read messageid error")
+	}
+	return seq_id, id, data[4:], nil
 }
 
 // 写数据
-func (msgParser *MessageParser) WriteWs(wsConn *WsConn, args ...[]byte) error {
-	// 获取数据长度
-	var msgLen uint32
-	for _, value := range args {
-		msgLen += uint32(len(value))
+// 支持批量操作
+func (msgParser *MessageParser) Write(data []byte) ([]byte, error) {
+	size := uint16(len(data))
+	if size >= msgParser.MinMessageLen && size <= msgParser.MaxMessageLen {
+		binary.BigEndian.PutUint16(msgParser.Buff, uint16(size))
+		copy(msgParser.Buff[2:], data)
+		return msgParser.Buff[:2+size], nil
 	}
-	// 检查长度
-	switch {
-	case msgLen > msgParser.MaxMessageLen:
-		return errors.New("message too long")
-	case msgLen < msgParser.MinMessageLen:
-		return errors.New("message too short")
-	}
-	// 完整的数据
-	msg := make([]byte, uint32(msgParser.MessageLen)+msgLen)
-	// 先写入消息体的长度数据
-	switch msgParser.MessageLen {
-	case 1:
-		msg[0] = byte(msgLen)
-	case 2:
-		if msgParser.LittleEndian {
-			binary.LittleEndian.PutUint16(msg, uint16(msgLen))
-		} else {
-			binary.BigEndian.PutUint16(msg, uint16(msgLen))
-		}
-	case 4:
-		if msgParser.LittleEndian {
-			binary.LittleEndian.PutUint32(msg, msgLen)
-		} else {
-			binary.BigEndian.PutUint32(msg, msgLen)
-		}
-	}
-	length := msgParser.MessageLen
-	for i := 0; i < len(args); i++ {
-		copy(msg[length:], args[i])
-		length += len(args[i])
-	}
-	wsConn.Write(msg)
-	return nil
+	return nil, errors.New("data is too long")
 }

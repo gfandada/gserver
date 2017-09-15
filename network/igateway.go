@@ -2,6 +2,8 @@ package network
 
 import (
 	"net"
+
+	"github.com/gorilla/websocket"
 )
 
 type Igateway interface {
@@ -9,7 +11,7 @@ type Igateway interface {
 	LocalAddr() net.Addr
 	RemoteAddr() net.Addr
 	Close()
-	Destroy()
+	Start(*websocket.Conn, *Config)
 	GetUserData() interface{}
 	SetUserData(data interface{})
 }

@@ -132,9 +132,12 @@ func Cast(pid uint64, msg string, args []interface{}) error {
 	if v == nil {
 		return errors.New("goroutine is not exist")
 	}
-	v.chanMsg <- &message{
+	select {
+	case v.chanMsg <- &message{
 		msg:  msg,
 		args: args,
+	}:
+	default: // 默认丢包
 	}
 	return nil
 }
