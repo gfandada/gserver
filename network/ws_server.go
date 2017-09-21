@@ -13,81 +13,74 @@ import (
 	"github.com/gorilla/websocket"
 )
 
-type WsServer struct {
-	ServerAddress  string       // 服务器对外暴露的地址：localhost:9527
-	MaxConnNum     int          // 最大的连接数
-	MaxMsgLen      int          // 消息的最大长度
-	MinMsgLen      int          // 消息的最小长度
-	ServerListener net.Listener // 服务器的监听器
-	PendingNum     int          // 允许的最大的客户端连接的缓冲队列长度
-	//	Agent          func(*WsConn) Iagent // 客户端代理
-	Handler     *WsHandler    // wshandler
-	HTTPTimeout time.Duration // http超时时间
-	CertFile    string        // wss参数
-	KeyFile     string        // wss参数
-	MsgParser   Imessage      // 消息解析器
-	ReadTimeout int           // 读超时
-	Gate        Igateway      // 上层网关
-}
-
-type WsHandler struct {
-	maxConnNum int            // 最大的连接数
-	maxMsgLen  int            // 单消息的最大长度
-	msgParser  Imessage       // 业务数据解析器
-	parser     *MessageParser // 报文解析器
-	pendingNum int            // 允许的最大的客户端连接的缓冲队列长度
-	//	Agent       func(*WsConn) Iagent // 客户端代理
-	upgrader    websocket.Upgrader // 用于升级http连接
-	readTimeout int                // 读超时
-	gate        Igateway           // 上层网关
-	mutexWG     sync.WaitGroup
-}
-
 type Config struct {
-	ReadDeadline time.Duration
-	Pendingnum   int
-	MsgParser    Imessage       // 业务数据解码器
-	Parser       *MessageParser // 报文解码器
+	ServerAddress string         // 服务地址
+	MaxHeader     int            // header大小限制，byte
+	MaxConnNum    int            // 最大连接数
+	MaxMsgLen     int            // 单消息的最大长度
+	MinMsgLen     int            // 单消息的最小长度
+	ReadDeadline  int            // 读超时s
+	WriteDeadline int            // 写超时s
+	HttpTimeout   int            // http超时s
+	Pendingnum    int            // gateway->client
+	CertFile      string         // for ssl
+	KeyFile       string         // for ssl
+	MsgParser     Imessage       // 业务数据解码器:默认使用pb
+	Parser        *MessageParser // 报文解码器:默认使用network包中的
+	Gate          Igateway       // 网关
 }
 
-// HTTP路由处理函数
-func (handler *WsHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	if r.Method != "GET" {
-		http.Error(w, "Method not allowed", 405)
-		logger.Error("Method not allowed, %s", r.Method)
-		return
-	}
-	// 升级http->websocket
-	conn, err := handler.upgrader.Upgrade(w, r, nil)
-	if err != nil {
-		logger.Error("upgrade error, %v", err)
-		return
-	}
-	conn.SetReadLimit(int64(handler.maxMsgLen))
-	conn.SetReadDeadline(time.Now().Add(time.Duration(handler.readTimeout) * time.Second))
-	//	conn.SetPongHandler(func(string) error { ws.SetReadDeadline(time.Now().Add(pongWait)); return nil })
-	handler.mutexWG.Add(1)
-	defer handler.mutexWG.Done()
-	handler.gate.Start(conn, &Config{
-		ReadDeadline: time.Duration(10) * time.Second,
-		Pendingnum:   100,
-		Parser:       handler.parser,
-		MsgParser:    handler.msgParser,
-	})
-	//	if ok := AddWsConn(conn, handler.MaxConnNum); !ok {
-	//		conn.Close()
-	//		return
-	//	}
-	//	wsConn := InitWsConn(conn, handler.PendingNum, handler.MsgParser)
-	//	agent := handler.Agent(wsConn)
-	//	agent.Run()
-	//	wsConn.Close()
-	//	DeleteConn(conn)
-	//	agent.OnClose()
+type WsServer struct {
+	serverAddress  string
+	maxHeader      int
+	maxConnNum     int
+	maxMsgLen      int
+	minMsgLen      int
+	pendingNum     int
+	readTimeout    int
+	writeTimeout   int
+	httpTimeout    int
+	certFile       string
+	keyFile        string
+	msgParser      Imessage
+	handler        *wsHandler
+	serverListener net.Listener
+	gate           Igateway
 }
 
-// 启动一个httpserver
-func (server *WsServer) Start() {
+type wsHandler struct {
+	maxConnNum   int
+	maxMsgLen    int
+	minMsgLen    int
+	pendingNum   int
+	readTimeout  int
+	writeTimeout int
+	upgrader     websocket.Upgrader
+	msgParser    Imessage
+	parser       *MessageParser
+	gate         Igateway
+	mutexWG      sync.WaitGroup
+}
+
+func Start(config *Config) *WsServer {
+	server := new(WsServer)
+	server.serverAddress = config.ServerAddress
+	server.maxHeader = config.MaxHeader
+	server.maxConnNum = config.MaxConnNum
+	server.maxMsgLen = config.MaxMsgLen
+	server.minMsgLen = config.MinMsgLen
+	server.pendingNum = config.Pendingnum
+	server.readTimeout = config.ReadDeadline
+	server.writeTimeout = config.WriteDeadline
+	server.httpTimeout = config.HttpTimeout
+	server.certFile = config.CertFile
+	server.keyFile = config.KeyFile
+	server.msgParser = config.MsgParser
+	server.start()
+	return server
+}
+
+func (server *WsServer) start() {
 	listener := server.init()
 	if listener == nil {
 		logger.Error(fmt.Sprintf("http server start failed, %v"))
@@ -96,85 +89,111 @@ func (server *WsServer) Start() {
 	go server.run(listener)
 }
 
-// 初始化
+func (handler *wsHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	if r.Method != "GET" {
+		http.Error(w, "Method not allowed", 405)
+		logger.Error("Method not allowed, %s", r.Method)
+		return
+	}
+	conn, err := handler.upgrader.Upgrade(w, r, nil)
+	if err != nil {
+		logger.Error("upgrade error, %v", err)
+		return
+	}
+	conn.SetReadLimit(int64(handler.maxMsgLen + 8))
+	handler.mutexWG.Add(1)
+	defer handler.mutexWG.Done()
+	//  TODO 最大连接数判断 TODO
+	handler.gate.Start(conn)
+}
+
 func (server *WsServer) init() net.Listener {
-	listener, err := net.Listen("tcp", server.ServerAddress)
+	listener, err := net.Listen("tcp", server.serverAddress)
 	if err != nil {
 		logger.Error(fmt.Sprintf("net.Listen error: %v", err))
 		return nil
 	}
-	if server.MaxConnNum <= 0 {
-		server.MaxConnNum = 100
-		logger.Warning(fmt.Sprintf("server.MaxConnNum <= 0, defalut 100"))
+	if server.maxHeader <= 0 {
+		server.maxHeader = 1024
+		logger.Warning(fmt.Sprintf("server.maxHeader <= 0, defalut 1024"))
 	}
-	if server.PendingNum <= 0 {
-		server.PendingNum = 100
-		logger.Warning(fmt.Sprintf("server.PendingNum <= 0, defalut 100"))
+	if server.maxConnNum <= 0 {
+		server.maxConnNum = 1000
+		logger.Warning(fmt.Sprintf("server.maxConnNum <= 0, defalut 1000"))
 	}
-	if server.MaxMsgLen <= 0 {
-		server.MaxMsgLen = 512
-		logger.Warning(fmt.Sprintf("server.MaxMsgLen <= 0, defalut 1024"))
+	if server.pendingNum <= 0 {
+		server.pendingNum = 100
+		logger.Warning(fmt.Sprintf("server.pendingNum <= 0, defalut 100"))
 	}
-	if server.MinMsgLen <= 0 {
-		server.MinMsgLen = 0
-		logger.Warning(fmt.Sprintf("server.MaxMsgLen <= 0, defalut 1024"))
+	if server.maxMsgLen <= 0 {
+		server.maxMsgLen = 512
+		logger.Warning(fmt.Sprintf("server.maxMsgLen <= 0, defalut 512"))
 	}
-	if server.HTTPTimeout <= 0 {
-		server.HTTPTimeout = 10 * time.Second
-		logger.Warning(fmt.Sprintf("server.HTTPTimeout <= 0, defalut 10s"))
+	if server.minMsgLen <= 0 {
+		server.minMsgLen = 0
+		logger.Warning(fmt.Sprintf("server.minMsgLen <= 0, defalut 0"))
 	}
-	//	if server.Agent == nil {
-	//		return nil
-	//	}
-	// 支持wss
-	// TODO
-	if server.CertFile != "" || server.KeyFile != "" {
+	if server.httpTimeout <= 0 {
+		server.httpTimeout = 10
+		logger.Warning(fmt.Sprintf("server.httpTimeout <= 0, defalut 10s"))
+	}
+	if server.readTimeout <= 0 {
+		server.readTimeout = 10
+		logger.Warning(fmt.Sprintf("server.readTimeout <= 0, defalut 10s"))
+	}
+	if server.writeTimeout <= 0 {
+		server.writeTimeout = 10
+		logger.Warning(fmt.Sprintf("server.writeTimeout <= 0, defalut 10s"))
+	}
+	// for ssl
+	if server.certFile != "" || server.keyFile != "" {
 		config := &tls.Config{}
 		config.NextProtos = []string{"http/1.1"}
 		var err error
 		config.Certificates = make([]tls.Certificate, 1)
-		config.Certificates[0], err = tls.LoadX509KeyPair(server.CertFile, server.KeyFile)
+		config.Certificates[0], err = tls.LoadX509KeyPair(server.certFile, server.keyFile)
 		if err != nil {
 			logger.Warning(fmt.Sprintf("wss error: %v", err))
 		}
 		listener = tls.NewListener(listener, config)
 	}
-	server.ServerListener = listener
-	server.Handler = &WsHandler{
-		maxConnNum: server.MaxConnNum,
-		maxMsgLen:  server.MaxMsgLen,
-		pendingNum: server.PendingNum,
-		//		Agent:      server.Agent,
+	server.serverListener = listener
+	server.handler = &wsHandler{
+		maxConnNum:   server.maxConnNum,
+		maxMsgLen:    server.maxMsgLen,
+		minMsgLen:    server.minMsgLen,
+		pendingNum:   server.pendingNum,
+		readTimeout:  server.readTimeout,
+		writeTimeout: server.writeTimeout,
 		upgrader: websocket.Upgrader{
-			HandshakeTimeout: server.HTTPTimeout,
+			HandshakeTimeout: time.Duration(server.httpTimeout) * time.Second,
 			CheckOrigin:      func(_ *http.Request) bool { return true },
 		},
-		readTimeout: server.ReadTimeout,
 	}
 	parser := NewMessageParser()
-	parser.SetMsgLen(uint16(server.MaxMsgLen), uint16(server.MinMsgLen))
-	server.Handler.parser = parser
-	if server.MsgParser == nil {
-		server.MsgParser = NewMsgManager()
+	parser.SetMsgLen(uint16(server.maxMsgLen), uint16(server.minMsgLen))
+	server.handler.parser = parser
+	if server.msgParser == nil {
+		// default protobuff
+		server.msgParser = NewMsgManager()
 	}
-	server.Handler.msgParser = server.MsgParser
-	server.Handler.gate = server.Gate
+	server.handler.msgParser = server.msgParser
+	server.handler.gate = server.gate
 	return listener
 }
 
-// run httpserver
 func (server *WsServer) run(listener net.Listener) {
 	httpServer := &http.Server{
-		Addr:           server.ServerAddress,
-		Handler:        server.Handler,
-		ReadTimeout:    server.HTTPTimeout,
-		WriteTimeout:   server.HTTPTimeout,
-		MaxHeaderBytes: 1024,
+		Addr:           server.serverAddress,
+		Handler:        server.handler,
+		ReadTimeout:    time.Duration(server.readTimeout) * time.Second,
+		WriteTimeout:   time.Duration(server.writeTimeout) * time.Second,
+		MaxHeaderBytes: server.maxHeader,
 	}
 	httpServer.Serve(listener)
 }
 
 func (server *WsServer) Close() {
-	server.ServerListener.Close()
-	server.Handler.mutexWG.Wait()
+	server.serverListener.Close()
+	server.handler.mutexWG.Wait()
 }

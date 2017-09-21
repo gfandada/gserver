@@ -1,6 +1,7 @@
 package gserver
 
 import (
+	Logger "./logger"
 	Module "./module"
 	Network "./network"
 	Services "./services"
@@ -16,39 +17,31 @@ func Run(mods ...Module.Imodule) {
 }
 
 // 运行websocket网关
-// @params path:配置文件 discpath:服务发现配置
-func RunWSGateway(path string, discpath string) {
+// @params log:日志配置 path:网关配置文件 discpath:服务发现配置 coder:消息编码器(注意消息需要注册)
+func RunWSGateway(log, path, discpath string, coder Network.Imessage) {
+	Logger.Start(log)
 	gate := new(GateService.WsGateway)
 	gate.Config = path
+	gate.Coder = coder
 	Discovery.Init(discpath)
 	Run(gate)
 }
 
 // 运行service
-// @params path:配置 discpath:服务发现配置
-func RunCluster(path string, discpath string) {
+// @params log:配置 path:服务配置 coder:消息编码器(注意消息需要注册)
+func RunService(log, path string, coder Network.Imessage) {
+	Logger.Start(log)
 	service := new(Service.Service)
 	service.Config = path
+	service.Coder = coder
 	Run(service)
 }
 
 // 注册消息handler
+// 非线程安全
 // @params list:消息列表
 func RegisterHandler(list []*Services.MsgHandler) {
 	for _, v := range list {
 		Services.Register(v.MsgId, v.MsgHandler)
-	}
-}
-
-// 绑定消息编码器
-// @params coder:消息编码器
-func BindCoder(coder Network.Imessage) {
-}
-
-// 注册消息至编码器中
-// @params coder:消息编码器
-func RegisterCoder(list []*Network.RawMessage, coder Network.Imessage) {
-	for _, v := range list {
-		coder.Register(v)
 	}
 }

@@ -29,6 +29,7 @@ type Agent struct {
 func (s *Agent) Stream(stream network.Service_StreamServer) error {
 	s.stream = stream
 	sess := New()
+	sess.Agent = s
 	in := startRecver(stream, sess.Die)
 	defer func() {
 		Remove(sess.UserId)
@@ -98,6 +99,21 @@ func (s *Agent) handler(frame *network.Data_Frame) error {
 	}
 }
 
+// for async ipc, not sync
+func (s *Agent) Send(msg network.RawMessage) {
+	ackdata, err := s.msgParser.Serialize(msg)
+	var data *network.Data_Frame
+	if err != nil {
+		data = Services.NewSInError(err)
+	} else {
+		data = &network.Data_Frame{
+			Type:    network.Data_Message,
+			Message: ackdata,
+		}
+	}
+	s.sess.MQ <- *data
+}
+
 func (s *Agent) dohandler(data []byte) *network.Data_Frame {
 	ret, err := s.msgParser.Deserialize(data)
 	if err != nil {
@@ -110,7 +126,6 @@ func (s *Agent) dohandler(data []byte) *network.Data_Frame {
 		ack := s.ackhandler(hand([]interface{}{ret.MsgData}))
 		if ack != nil {
 			ackdata, erra := s.msgParser.Serialize(ack.(network.RawMessage))
-			fmt.Println(erra, len(ackdata))
 			if erra != nil {
 				return Services.NewSInError(err)
 			}

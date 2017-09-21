@@ -17,10 +17,11 @@ type SessionManger struct {
 
 type Session struct {
 	MQ       chan network.Data_Frame // 返回给网关的异步消息
+	Agent    *Agent                  // 代理器
 	UserId   int32                   // 玩家ID
 	Die      chan struct{}           // 会话关闭信号
 	Flag     int32                   // 会话标记
-	UserData []interface{}           // 用户sess数据
+	UserData []interface{}           // 用户自定义sess数据
 }
 
 func init() {
@@ -72,6 +73,15 @@ func Remove(id int32) {
 
 func Get(id int32) *Session {
 	return _sessionm.get(id)
+}
+
+// for async ipc, not sync
+func Send(id int32, msg network.RawMessage) {
+	sess := Get(id)
+	if sess == nil {
+		return
+	}
+	sess.Agent.Send(msg)
 }
 
 func Count() int {

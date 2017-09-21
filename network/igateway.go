@@ -11,7 +11,7 @@ type Igateway interface {
 	LocalAddr() net.Addr
 	RemoteAddr() net.Addr
 	Close()
-	Start(*websocket.Conn, *Config)
+	Start(*websocket.Conn)
 	GetUserData() interface{}
 	SetUserData(data interface{})
 }
