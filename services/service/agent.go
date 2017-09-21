@@ -6,8 +6,8 @@ import (
 	"reflect"
 	"strconv"
 
-	Services "../"
-	"../../network"
+	"github.com/gfandada/gserver/network"
+	Services "github.com/gfandada/gserver/services"
 	"google.golang.org/grpc/metadata"
 )
 

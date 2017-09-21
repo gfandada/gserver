@@ -7,8 +7,8 @@ import (
 	"reflect"
 	"time"
 
-	Services "../"
-	"../../network"
+	"github.com/gfandada/gserver/network"
+	Services "github.com/gfandada/gserver/services"
 )
 
 type gaterecv struct {

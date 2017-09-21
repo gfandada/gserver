@@ -4,8 +4,8 @@ package service
 import (
 	"net"
 
-	Loader "../../loader"
-	"../../network"
+	Loader "github.com/gfandada/gserver/loader"
+	"github.com/gfandada/gserver/network"
 	"google.golang.org/grpc"
 )
 
@@ -30,7 +30,9 @@ type Service struct {
 }
 
 func (s *Service) OnInit() {
-	Loader.LoadJson(s.Config, s.configdata)
+	config := new(network.Config)
+	Loader.LoadJson(s.Config, config)
+	s.configdata = config
 }
 
 func (s *Service) OnDestroy() {

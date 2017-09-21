@@ -3,7 +3,7 @@ package service
 import (
 	"sync"
 
-	"../../network"
+	"github.com/gfandada/gserver/network"
 )
 
 var (

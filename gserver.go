@@ -1,13 +1,13 @@
 package gserver
 
 import (
-	Logger "./logger"
-	Module "./module"
-	Network "./network"
-	Services "./services"
-	Discovery "./services/discovery"
-	GateService "./services/gateway"
-	Service "./services/service"
+	Logger "github.com/gfandada/gserver/logger"
+	Module "github.com/gfandada/gserver/module"
+	Network "github.com/gfandada/gserver/network"
+	Services "github.com/gfandada/gserver/services"
+	Discovery "github.com/gfandada/gserver/services/discovery"
+	GateService "github.com/gfandada/gserver/services/gateway"
+	Service "github.com/gfandada/gserver/services/service"
 )
 
 // 运行模块

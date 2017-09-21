@@ -5,9 +5,8 @@ import (
 	"net"
 	"time"
 
-	Services "../"
-	Loader "../../loader"
-	"../../network"
+	Loader "github.com/gfandada/gserver/loader"
+	"github.com/gfandada/gserver/network"
 	"github.com/gorilla/websocket"
 )
 
@@ -74,18 +73,11 @@ func (wg *WsGateway) SetUserData(data interface{}) {
 /****************************实现imodule接口******************************/
 
 func (wg *WsGateway) OnInit() {
-	Loader.LoadJson(wg.Config, wg.configdata)
+	config := new(network.Config)
+	Loader.LoadJson(wg.Config, config)
+	wg.configdata = config
 	wg.configdata.Gate = new(WsGateway)
 	wg.configdata.MsgParser = network.NewMsgManager()
-	// 注册消息
-	wg.configdata.MsgParser.Register(&network.RawMessage{
-		MsgId:   uint16(1002),
-		MsgData: &Services.TouristsLoginReq{},
-	})
-	wg.configdata.MsgParser.Register(&network.RawMessage{
-		MsgId:   uint16(1003),
-		MsgData: &Services.TouristsLoginAck{},
-	})
 }
 
 func (wg *WsGateway) OnDestroy() {

@@ -22,7 +22,7 @@ type Config struct {
 	ReadDeadline  int            // 读超时s
 	WriteDeadline int            // 写超时s
 	HttpTimeout   int            // http超时s
-	Pendingnum    int            // gateway->client
+	PendingNum    int            // gateway->client
 	CertFile      string         // for ssl
 	KeyFile       string         // for ssl
 	MsgParser     Imessage       // 业务数据解码器:默认使用pb
@@ -69,7 +69,7 @@ func Start(config *Config) *WsServer {
 	server.maxConnNum = config.MaxConnNum
 	server.maxMsgLen = config.MaxMsgLen
 	server.minMsgLen = config.MinMsgLen
-	server.pendingNum = config.Pendingnum
+	server.pendingNum = config.PendingNum
 	server.readTimeout = config.ReadDeadline
 	server.writeTimeout = config.WriteDeadline
 	server.httpTimeout = config.HttpTimeout
@@ -129,9 +129,9 @@ func (server *WsServer) init() net.Listener {
 		server.maxMsgLen = 512
 		logger.Warning(fmt.Sprintf("server.maxMsgLen <= 0, defalut 512"))
 	}
-	if server.minMsgLen <= 0 {
+	if server.minMsgLen < 0 {
 		server.minMsgLen = 0
-		logger.Warning(fmt.Sprintf("server.minMsgLen <= 0, defalut 0"))
+		logger.Warning(fmt.Sprintf("server.minMsgLen < 0, defalut 0"))
 	}
 	if server.httpTimeout <= 0 {
 		server.httpTimeout = 10

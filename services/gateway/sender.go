@@ -2,7 +2,7 @@
 package gateway
 
 import (
-	"../../network"
+	"github.com/gfandada/gserver/network"
 	"github.com/gorilla/websocket"
 )
 
@@ -58,7 +58,7 @@ func startSender(conn *websocket.Conn, sess *Session, in <-chan []byte, config *
 	}
 	cgs := &gatesend{
 		conn:    conn,
-		pending: make(chan []byte, config.Pendingnum),
+		pending: make(chan []byte, config.PendingNum),
 		die:     sess.Die,
 		config:  config,
 	}

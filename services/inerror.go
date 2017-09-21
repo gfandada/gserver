@@ -2,7 +2,7 @@
 package services
 
 import (
-	"../network"
+	"github.com/gfandada/gserver/network"
 )
 
 // 构建一个gataway通用内部错误(错误码为0)

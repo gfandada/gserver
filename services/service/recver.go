@@ -3,7 +3,7 @@ package service
 import (
 	"io"
 
-	"../../network"
+	"github.com/gfandada/gserver/network"
 )
 
 type recver struct {

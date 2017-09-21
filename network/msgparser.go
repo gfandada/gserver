@@ -24,7 +24,7 @@ import (
 	"encoding/binary"
 	"errors"
 
-	"../misc"
+	"github.com/gfandada/gserver/misc"
 	"github.com/gorilla/websocket"
 )
 

@@ -5,9 +5,9 @@ import (
 	"fmt"
 	"io"
 
-	Services "../"
-	"../../network"
-	Discovery "../../services/discovery"
+	"github.com/gfandada/gserver/network"
+	Services "github.com/gfandada/gserver/services"
+	Discovery "github.com/gfandada/gserver/services/discovery"
 	"golang.org/x/net/context"
 	"google.golang.org/grpc/metadata"
 )

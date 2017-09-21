@@ -3,7 +3,7 @@ package gateway
 import (
 	"time"
 
-	"../../network"
+	"github.com/gfandada/gserver/network"
 )
 
 const (
