@@ -22,7 +22,7 @@ type router struct {
 }
 
 func (r *router) run(sync chan struct{}) {
-	conn := Discovery.GetService("game")
+	conn := Discovery.GetService("service")
 	cli := network.NewServiceClient(conn)
 	ctx := metadata.NewContext(context.Background(), metadata.New(map[string]string{"userid": fmt.Sprint(r.sess.UserId)}))
 	stream, err := cli.Stream(ctx)
