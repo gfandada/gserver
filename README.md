@@ -17,7 +17,7 @@ go get github.com/go-sql-driver/mysql
 ```
 ### TODO
 ```
-current version is v0.8.1
+current version is v0.8.3
 next version-v0.9.0 will focus on:
 1.optimize safe
 2.optimize microservice
