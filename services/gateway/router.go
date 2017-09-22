@@ -47,10 +47,10 @@ func (r *router) run(sync chan struct{}) {
 	}
 }
 
-// gateway local router:[0,1000]
-// gateway remote router:[1001,+}
+// gateway local router:[0,1999]
+// gateway remote router:[2000,+}
 func (r *router) router(id uint16, msg []byte) []byte {
-	if id > 1003 {
+	if id >= 2000 {
 		if err := r.remoteroute(msg); err != nil {
 			r.sess.Flag |= SESS_AUTHFAILED
 			return Services.NewInError(err)

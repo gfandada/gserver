@@ -25,9 +25,9 @@ type Config struct {
 	PendingNum    int            // gateway->client
 	CertFile      string         // for ssl
 	KeyFile       string         // for ssl
-	MsgParser     Imessage       // 业务数据解码器:默认使用pb
-	Parser        *MessageParser // 报文解码器:默认使用network包中的
-	Gate          Igateway       // 网关
+	MsgParser     Imessage       // for message
+	Parser        *MessageParser // for 报文
+	Gate          Iagent         // 网关
 }
 
 type WsServer struct {
@@ -45,7 +45,7 @@ type WsServer struct {
 	msgParser      Imessage
 	handler        *wsHandler
 	serverListener net.Listener
-	gate           Igateway
+	gate           Iagent
 }
 
 type wsHandler struct {
@@ -56,9 +56,7 @@ type wsHandler struct {
 	readTimeout  int
 	writeTimeout int
 	upgrader     websocket.Upgrader
-	msgParser    Imessage
-	parser       *MessageParser
-	gate         Igateway
+	gate         Iagent
 	mutexWG      sync.WaitGroup
 }
 
@@ -76,6 +74,7 @@ func Start(config *Config) *WsServer {
 	server.certFile = config.CertFile
 	server.keyFile = config.KeyFile
 	server.msgParser = config.MsgParser
+	server.gate = config.Gate
 	server.start()
 	return server
 }
@@ -104,7 +103,7 @@ func (handler *wsHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	handler.mutexWG.Add(1)
 	defer handler.mutexWG.Done()
 	//  TODO 最大连接数判断 TODO
-	handler.gate.Start(conn)
+	handler.gate.NewIagent().Start(conn)
 }
 
 func (server *WsServer) init() net.Listener {
@@ -170,14 +169,10 @@ func (server *WsServer) init() net.Listener {
 			CheckOrigin:      func(_ *http.Request) bool { return true },
 		},
 	}
-	parser := NewMessageParser()
-	parser.SetMsgLen(uint16(server.maxMsgLen), uint16(server.minMsgLen))
-	server.handler.parser = parser
 	if server.msgParser == nil {
-		// default protobuff
-		server.msgParser = NewMsgManager()
+		logger.Error("server.msgParser is nil %v", server)
+		return nil
 	}
-	server.handler.msgParser = server.msgParser
 	server.handler.gate = server.gate
 	return listener
 }

@@ -31,6 +31,10 @@ func NewMsgManager() *MsgManager {
 
 /******************************实现了imessage接口*****************************/
 
+func (msgManager *MsgManager) NewIMessage() Imessage {
+	return &MsgManager{MsgMap: msgManager.MsgMap, LittleEndian: msgManager.LittleEndian}
+}
+
 func (msgManager *MsgManager) Register(rawM *RawMessage) error {
 	if _, ok := msgManager.MsgMap[rawM.MsgId]; ok {
 		return fmt.Errorf("msg has registered", rawM.MsgId)

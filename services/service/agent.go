@@ -22,12 +22,10 @@ var (
 
 type Agent struct {
 	msgParser network.Imessage
-	stream    network.Service_StreamServer
 	sess      *Session
 }
 
 func (s *Agent) Stream(stream network.Service_StreamServer) error {
-	s.stream = stream
 	sess := New()
 	sess.Agent = s
 	in := startRecver(stream, sess.Die)
@@ -47,7 +45,7 @@ func (s *Agent) Stream(stream network.Service_StreamServer) error {
 			if !ok {
 				return nil
 			}
-			s.handler(frame)
+			s.handler(stream, frame)
 		case frame := <-sess.MQ:
 			if err := stream.Send(&frame); err != nil {
 				return err
@@ -71,26 +69,27 @@ func (s *Agent) getUserId(stream network.Service_StreamServer) (int32, error) {
 	return int32(userid), nil
 }
 
-func (s *Agent) send(frame *network.Data_Frame) error {
-	return s.stream.Send(frame)
+// for sync ipc
+func (s *Agent) send(stream network.Service_StreamServer, frame *network.Data_Frame) error {
+	return stream.Send(frame)
 }
 
-func (s *Agent) handler(frame *network.Data_Frame) error {
+func (s *Agent) handler(stream network.Service_StreamServer, frame *network.Data_Frame) error {
 	defer func() {
 		if r := recover(); r != nil {
 			switch reflect.TypeOf(r).Name() {
 			case "int":
-				s.send(Services.NewSLogicError(r.(int)))
+				s.send(stream, Services.NewSLogicError(r.(int)))
 			default:
-				s.send(Services.NewSInError(fmt.Errorf("%v", r)))
+				s.send(stream, Services.NewSInError(fmt.Errorf("%v", r)))
 			}
 		}
 	}()
 	switch frame.Type {
 	case network.Data_Message:
-		return s.send(s.dohandler(frame.Message))
+		return s.send(stream, s.dohandler(frame.Message))
 	case network.Data_Ping:
-		return s.send(&network.Data_Frame{
+		return s.send(stream, &network.Data_Frame{
 			Type:    network.Data_Ping,
 			Message: frame.Message,
 		})
@@ -99,7 +98,7 @@ func (s *Agent) handler(frame *network.Data_Frame) error {
 	}
 }
 
-// for async ipc, not sync
+// for async ipc
 func (s *Agent) Send(msg network.RawMessage) {
 	ackdata, err := s.msgParser.Serialize(msg)
 	var data *network.Data_Frame

@@ -10,15 +10,12 @@ import (
 	"github.com/gorilla/websocket"
 )
 
-type WsGateway struct {
-	Config     string            // 配置文件
-	Coder      network.Imessage  // 编码器
-	configdata *network.Config   // 配置数据
-	wsServer   *network.WsServer // 服务器
-	conn       *websocket.Conn   // 当前会话
+type Agent struct {
+	configdata *network.Config // 配置数据
+	conn       *websocket.Conn // 当前会话
 }
 
-func (wg *WsGateway) Start(conn *websocket.Conn) {
+func (wg *Agent) Start(conn *websocket.Conn) {
 	defer conn.Close()
 	wg.conn = conn
 	config := wg.configdata
@@ -46,38 +43,51 @@ func (wg *WsGateway) Start(conn *websocket.Conn) {
 	wg.Close()
 }
 
-func (wg *WsGateway) Close() {
+func (wg *Agent) NewIagent() network.Iagent {
+	return &Agent{configdata: wg.configdata}
+}
+
+func (wg *Agent) Close() {
 
 }
 
-func (wg *WsGateway) WriteMsg(msg interface{}) {
+func (wg *Agent) WriteMsg(msg interface{}) {
 
 }
 
-func (wg *WsGateway) LocalAddr() net.Addr {
+func (wg *Agent) LocalAddr() net.Addr {
 	return wg.conn.LocalAddr()
 }
 
-func (wg *WsGateway) RemoteAddr() net.Addr {
+func (wg *Agent) RemoteAddr() net.Addr {
 	return wg.conn.RemoteAddr()
 }
 
-func (wg *WsGateway) GetUserData() interface{} {
+func (wg *Agent) GetUserData() interface{} {
 	return nil
 }
 
-func (wg *WsGateway) SetUserData(data interface{}) {
+func (wg *Agent) SetUserData(data interface{}) {
 
 }
 
 /****************************实现imodule接口******************************/
 
+type WsGateway struct {
+	Config     string
+	Coder      network.Imessage
+	configdata *network.Config
+	wsServer   *network.WsServer
+}
+
 func (wg *WsGateway) OnInit() {
 	config := new(network.Config)
 	Loader.LoadJson(wg.Config, config)
 	wg.configdata = config
-	wg.configdata.Gate = new(WsGateway)
-	wg.configdata.MsgParser = network.NewMsgManager()
+	wg.configdata.MsgParser = wg.Coder
+	wg.configdata.Parser = network.NewMessageParser()
+	wg.configdata.Parser.SetMsgLen(uint16(config.MaxMsgLen), uint16(config.MinMsgLen))
+	wg.configdata.Gate = &Agent{configdata: wg.configdata}
 }
 
 func (wg *WsGateway) OnDestroy() {
