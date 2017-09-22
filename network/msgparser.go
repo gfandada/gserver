@@ -37,7 +37,6 @@ type MessageParser struct {
 type RawMessage struct {
 	MsgId   uint16
 	MsgData interface{}
-	MsgRaw  []byte // id+data
 }
 
 func NewMessageParser() (newMsg *MessageParser) {

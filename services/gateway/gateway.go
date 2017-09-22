@@ -85,6 +85,7 @@ func (wg *WsGateway) OnInit() {
 	Loader.LoadJson(wg.Config, config)
 	wg.configdata = config
 	wg.configdata.MsgParser = wg.Coder
+	wg.configdata.MsgParser.SetMaxLen(config.MaxMsgLen)
 	wg.configdata.Parser = network.NewMessageParser()
 	wg.configdata.Parser.SetMsgLen(uint16(config.MaxMsgLen), uint16(config.MinMsgLen))
 	wg.configdata.Gate = &Agent{configdata: wg.configdata}
