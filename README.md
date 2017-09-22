@@ -21,6 +21,7 @@ current version is v0.8.1
 next version-v0.9.0 will focus on:
 1.optimize safe
 2.optimize microservice
+3.add inner logger
 ```
 ### dataflow
 ![image](https://github.com/gfandada/gserver/blob/master/png/dataflow.png)
