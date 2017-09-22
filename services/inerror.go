@@ -9,7 +9,7 @@ import (
 	"github.com/golang/protobuf/proto"
 )
 
-// 构建一个gataway通用内部错误
+// 构建一个gataway通用内部错误(errid=0)
 // @params err:错误描述
 func NewInError(err error) []byte {
 	return newError(0, err.Error())
@@ -21,10 +21,10 @@ func NewLogicError(id int) []byte {
 	return newError(id, "")
 }
 
-// 构建一个service通用内部错误(错误码为1000)
+// 构建一个service通用内部错误(errid=1)
 // @params err:错误描述
 func NewSInError(err error) *network.Data_Frame {
-	data := newError(0, err.Error())
+	data := newError(1, err.Error())
 	return &network.Data_Frame{
 		Type:    network.Data_Message,
 		Message: data,
