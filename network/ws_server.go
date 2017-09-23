@@ -60,7 +60,7 @@ type wsHandler struct {
 	mutexWG      sync.WaitGroup
 }
 
-func Start(config *Config) *WsServer {
+func StartWs(config *Config) *WsServer {
 	server := new(WsServer)
 	server.serverAddress = config.ServerAddress
 	server.maxHeader = config.MaxHeader
@@ -102,8 +102,15 @@ func (handler *wsHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	conn.SetReadLimit(int64(handler.maxMsgLen + 8))
 	handler.mutexWG.Add(1)
 	defer handler.mutexWG.Done()
+	defer func() {
+		if r := recover(); r != nil {
+			// TODO
+			fmt.Println("ws agent error:", r)
+		}
+	}()
 	//  TODO 最大连接数判断 TODO
-	handler.gate.NewIagent().Start(conn)
+	// for agent
+	handler.gate.NewIagent().Start(&WsConn{conn: conn})
 }
 
 func (server *WsServer) init() net.Listener {

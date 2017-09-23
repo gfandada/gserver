@@ -3,7 +3,6 @@ package gateway
 
 import (
 	"github.com/gfandada/gserver/network"
-	"github.com/gorilla/websocket"
 )
 
 const (
@@ -16,7 +15,7 @@ const (
 type gatesend struct {
 	die     <-chan struct{}
 	pending chan []byte
-	conn    *websocket.Conn
+	conn    network.Iconn
 	recver  *gaterecv
 	config  *network.Config
 }
@@ -45,14 +44,15 @@ func (gtc *gatesend) run() {
 func (gtc *gatesend) raw_send(data []byte) {
 	msg, err := gtc.config.Parser.Write(data)
 	if err == nil {
-		gtc.conn.WriteMessage(websocket.BinaryMessage, msg)
+		// TODO ignore failed
+		gtc.conn.WriteMsg(msg)
 	}
 }
 
 // 构建GateToClient处理器
 // @params conn:会话  die:控制器 pendingnum:排队上限
 // @return GateToClient处理器
-func startSender(conn *websocket.Conn, sess *Session, in <-chan []byte, config *network.Config) *gatesend {
+func startSender(conn network.Iconn, sess *Session, in <-chan []byte, config *network.Config) *gatesend {
 	if conn == nil {
 		return nil
 	}

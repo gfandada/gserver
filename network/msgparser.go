@@ -25,13 +25,12 @@ import (
 	"errors"
 
 	"github.com/gfandada/gserver/misc"
-	"github.com/gorilla/websocket"
 )
 
 type MessageParser struct {
 	maxMessageLen uint16 // for message
 	minMessageLen uint16 // for message
-	buff          []byte // for id+message(缓存，防止内存碎片)
+	buff          []byte // for send
 }
 
 type RawMessage struct {
@@ -43,7 +42,7 @@ func NewMessageParser() (newMsg *MessageParser) {
 	newMsg = new(MessageParser)
 	newMsg.minMessageLen = 0
 	newMsg.maxMessageLen = 512
-	newMsg.buff = make([]byte, newMsg.maxMessageLen+2)
+	newMsg.buff = make([]byte, newMsg.maxMessageLen+4)
 	return
 }
 
@@ -56,25 +55,19 @@ func (msgParser *MessageParser) SetMsgLen(MaxMessageLen uint16, MinMessageLen ui
 	}
 }
 
-// 获取body(除len)
-func (msgParser *MessageParser) ReadBody(conn *websocket.Conn) ([]byte, error) {
-	typ, data, err := conn.ReadMessage()
-	if err != nil {
-		return nil, err
-	}
-	if typ != websocket.BinaryMessage {
-		return nil, errors.New("message type error")
-	}
+// 获取body(除header)
+func (msgParser *MessageParser) ReadBody(data []byte) ([]byte, error) {
 	size := binary.BigEndian.Uint16(data[:2])
 	switch {
-	case uint16(size) > msgParser.maxMessageLen:
+	case uint16(size) > msgParser.maxMessageLen+6:
 		return nil, errors.New("message too long")
-	case uint16(size) < msgParser.minMessageLen:
+	case uint16(size) < msgParser.minMessageLen+6:
 		return nil, errors.New("message too short")
 	}
 	return data[2:], nil
 }
 
+//
 // 拆分body数据
 // @return 数据1(序列号)，数据2(协议号)，数据3(id+message)，错误描述
 func (msgParser *MessageParser) ReadBodyFull(data []byte) (uint32, uint16, []byte, error) {
@@ -90,8 +83,12 @@ func (msgParser *MessageParser) ReadBodyFull(data []byte) (uint32, uint16, []byt
 	return seq_id, id, data[4:], nil
 }
 
-// write id+message
+// @params data:id+message
+// @return header+data
 func (msgParser *MessageParser) Write(data []byte) ([]byte, error) {
+	if data == nil {
+		return nil, errors.New("data is too short")
+	}
 	size := uint16(len(data))
 	if size-2 >= msgParser.minMessageLen && size-2 <= msgParser.maxMessageLen {
 		binary.BigEndian.PutUint16(msgParser.buff, uint16(size))

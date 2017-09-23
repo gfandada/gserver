@@ -27,6 +27,17 @@ func RunWSGateway(log, path, discpath string, coder Network.Imessage) {
 	Run(gate)
 }
 
+// 运行tcp网关
+// @params log:日志配置 path:网关配置文件 discpath:服务发现配置 coder:消息编码器(注意消息需要注册)
+func RunTCPGateway(log, path, discpath string, coder Network.Imessage) {
+	Logger.Start(log)
+	gate := new(GateService.TcpGateway)
+	gate.Config = path
+	gate.Coder = coder
+	Discovery.Init(discpath)
+	Run(gate)
+}
+
 // 运行service
 // @params log:配置 path:服务配置 coder:消息编码器(注意消息需要注册)
 func RunService(log, path string, coder Network.Imessage) {
