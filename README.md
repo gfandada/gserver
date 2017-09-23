@@ -22,6 +22,7 @@ next version-v0.9.0 will focus on:
 1.optimize safe
 2.optimize microservice
 3.add inner logger
+4.add tcp gateway
 ```
 ### dataflow
 ![image](https://github.com/gfandada/gserver/blob/master/png/dataflow.png)
