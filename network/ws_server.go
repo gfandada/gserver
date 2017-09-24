@@ -57,6 +57,9 @@ type wsHandler struct {
 	writeTimeout int
 	upgrader     websocket.Upgrader
 	gate         Iagent
+	conns        map[*websocket.Conn]struct{}
+	mutexConns   sync.Mutex
+	wgConns      sync.WaitGroup
 	mutexWG      sync.WaitGroup
 }
 
@@ -100,16 +103,22 @@ func (handler *wsHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	conn.SetReadLimit(int64(handler.maxMsgLen + 8))
-	handler.mutexWG.Add(1)
-	defer handler.mutexWG.Done()
 	defer func() {
 		if r := recover(); r != nil {
 			// TODO
 			fmt.Println("ws agent error:", r)
 		}
 	}()
-	//  TODO 最大连接数判断 TODO
-	// for agent
+	handler.mutexConns.Lock()
+	if len(handler.conns) >= handler.maxConnNum {
+		handler.mutexConns.Unlock()
+		conn.Close()
+		return
+	}
+	handler.conns[conn] = struct{}{}
+	handler.mutexConns.Unlock()
+	handler.mutexWG.Add(1)
+	defer handler.mutexWG.Done()
 	handler.gate.NewIagent().Start(&WsConn{conn: conn})
 }
 
@@ -171,6 +180,7 @@ func (server *WsServer) init() net.Listener {
 		pendingNum:   server.pendingNum,
 		readTimeout:  server.readTimeout,
 		writeTimeout: server.writeTimeout,
+		conns:        make(map[*websocket.Conn]struct{}, server.maxConnNum),
 		upgrader: websocket.Upgrader{
 			HandshakeTimeout: time.Duration(server.httpTimeout) * time.Second,
 			CheckOrigin:      func(_ *http.Request) bool { return true },
@@ -198,4 +208,11 @@ func (server *WsServer) run(listener net.Listener) {
 func (server *WsServer) Close() {
 	server.serverListener.Close()
 	server.handler.mutexWG.Wait()
+	server.handler.mutexConns.Lock()
+	for conn := range server.handler.conns {
+		conn.Close()
+	}
+	server.handler.conns = nil
+	server.handler.mutexConns.Unlock()
+	server.handler.wgConns.Wait()
 }
