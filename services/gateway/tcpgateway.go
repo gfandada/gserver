@@ -19,7 +19,6 @@ func (tcp *TcpGateway) OnInit() {
 	Loader.LoadJson(tcp.Config, config)
 	tcp.configdata = config
 	tcp.configdata.MsgParser = tcp.Coder
-	tcp.configdata.MsgParser.SetMaxLen(config.MaxMsgLen)
 	tcp.configdata.Parser = network.NewMessageParser()
 	tcp.configdata.Parser.SetMsgLen(uint16(config.MaxMsgLen), uint16(config.MinMsgLen))
 	tcp.configdata.Gate = &Agent{configdata: tcp.configdata}

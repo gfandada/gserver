@@ -55,6 +55,14 @@ func (msgParser *MessageParser) SetMsgLen(MaxMessageLen uint16, MinMessageLen ui
 	}
 }
 
+func (msgParser *MessageParser) NewMessageParser() *MessageParser {
+	return &MessageParser{
+		maxMessageLen: msgParser.maxMessageLen,
+		minMessageLen: msgParser.minMessageLen,
+		buff:          make([]byte, 8+msgParser.maxMessageLen),
+	}
+}
+
 // 获取body(除header)
 func (msgParser *MessageParser) ReadBody(data []byte) ([]byte, error) {
 	size := binary.BigEndian.Uint16(data[:2])
@@ -90,10 +98,11 @@ func (msgParser *MessageParser) Write(data []byte) ([]byte, error) {
 		return nil, errors.New("data is too short")
 	}
 	size := uint16(len(data))
+	buff := msgParser.buff
 	if size-2 >= msgParser.minMessageLen && size-2 <= msgParser.maxMessageLen {
-		binary.BigEndian.PutUint16(msgParser.buff, uint16(size))
-		copy(msgParser.buff[2:], data)
-		return msgParser.buff[:2+size], nil
+		binary.BigEndian.PutUint16(buff, uint16(size))
+		copy(buff[2:], data)
+		return buff[:2+size], nil
 	}
 	return nil, errors.New("data is too long")
 }

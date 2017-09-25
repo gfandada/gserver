@@ -14,6 +14,8 @@ type Agent struct {
 
 func (agent *Agent) Start(conn network.Iconn) {
 	defer conn.Close()
+	// for goroutine safe
+	agent.configdata.Parser = agent.configdata.Parser.NewMessageParser()
 	agent.conn = conn
 	config := agent.configdata
 	in := make(chan []byte)
