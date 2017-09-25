@@ -27,7 +27,7 @@ next version-v0.9.0 will focus on:
 ```
 ### Message
 ```
-	client->gateway
+client->gateway
 	----------------------------
 	| len | seq | id | message |
 	----------------------------
@@ -36,7 +36,7 @@ next version-v0.9.0 will focus on:
 	id:协议号，占用2个字节(uint16)
 	message:业务数据，占用len-6字节，可以使用任意编码：pb/json等
 
-	gateway->client
+gateway->client
 	----------------------
 	| len | id | message |
 	----------------------
@@ -44,7 +44,7 @@ next version-v0.9.0 will focus on:
 	id:协议号，占用两个字节(uint16)
 	message:业务数据，占用len-2字节，可以使用任意编码：pb/json等
 	
-	gateway<->service(base pb3)
+gateway<->service(base pb3)
 	type Data_Frame struct {
 		Type    Data_FrameType
 		Message []byte
