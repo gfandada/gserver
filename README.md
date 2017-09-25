@@ -34,7 +34,7 @@ client->gateway
 	len:seq + id + message，占用2个字节(uint16)
 	seq:从1自增的序列号，占用4个字节(uint32)
 	id:协议号，占用2个字节(uint16)
-	message:业务数据，占用len-6字节，可以使用任意编码：pb/json等
+	message:业务数据，占用len-6字节，可以使用任意编码：pb/json等，本框架内置了pb编码器
 
 gateway->client
 	----------------------
@@ -42,7 +42,7 @@ gateway->client
 	----------------------
 	len:id + message的长度，占用2个字节(uint16)
 	id:协议号，占用两个字节(uint16)
-	message:业务数据，占用len-2字节，可以使用任意编码：pb/json等
+	message:业务数据，占用len-2字节，可以使用任意编码：pb/json等，本框架内置了pb编码器
 	
 gateway<->service(base pb3)
 	type Data_Frame struct {
