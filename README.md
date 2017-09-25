@@ -3,7 +3,7 @@
 This project aims to provide a solution for real-time message flow. 
 You can create GameServer or others, with gserver.
 The communication protocol of GateWay has supported Tcp and Websocket.
-DEMO is herer : https://github.com/gfandada/gserver_demo.
+DEMO is here : https://github.com/gfandada/gserver_demo.
 ```
 ### Installation
 ```
