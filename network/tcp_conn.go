@@ -57,5 +57,7 @@ func (conn *TcpConn) SetWriteDeadline(t time.Time) error {
 }
 
 func (conn *TcpConn) Close() {
+	// default drop data
+	conn.conn.(*net.TCPConn).SetLinger(0)
 	conn.conn.Close()
 }
