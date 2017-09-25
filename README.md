@@ -25,5 +25,30 @@ next version-v0.9.0 will focus on:
 3.add inner logger
 4.add tcp gateway -- DONE
 ```
+### Message
+```
+	client->gateway
+	----------------------------
+	| len | seq | id | message |
+	----------------------------
+	len:seq + id + message，占用2个字节(uint16)
+	seq:从1自增的序列号，占用4个字节(uint32)
+	id:协议号，占用2个字节(uint16)
+	message:业务数据，占用len-6字节，可以使用任意编码：pb/json等
+
+	gateway->client
+	----------------------
+	| len | id | message |
+	----------------------
+	len:id + message的长度，占用2个字节(uint16)
+	id:协议号，占用两个字节(uint16)
+	message:业务数据，占用len-2字节，可以使用任意编码：pb/json等
+	
+	gateway<->service(base pb3)
+	type Data_Frame struct {
+		Type    Data_FrameType
+		Message []byte
+	}
+```
 ### dataflow
 ![image](https://github.com/gfandada/gserver/blob/master/png/dataflow.png)

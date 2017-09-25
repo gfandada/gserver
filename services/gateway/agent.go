@@ -1,4 +1,4 @@
-// 通用websocket网关
+// 通用的代理器
 package gateway
 
 import (

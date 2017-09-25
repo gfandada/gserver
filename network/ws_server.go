@@ -1,3 +1,4 @@
+// 通用的websocket服务器
 package network
 
 import (

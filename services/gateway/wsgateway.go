@@ -1,3 +1,4 @@
+// 通用的websocket网关
 package gateway
 
 import (

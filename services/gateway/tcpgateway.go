@@ -1,3 +1,4 @@
+// 通用的tcp网关
 package gateway
 
 import (

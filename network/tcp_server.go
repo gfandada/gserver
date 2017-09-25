@@ -1,3 +1,4 @@
+// 通用的tcp服务器
 package network
 
 import (
