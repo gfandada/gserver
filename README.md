@@ -19,7 +19,27 @@ next version-v0.9.0 will focus on:
 1.optimize safe  
 2.optimize microservice  
 3.add inner logger  
-4.add tcp gateway -- DONE  
+4.add tcp gateway -- DONE
+### CONF
+```
+更全的配置请查看demo工程
+{
+	"MaxConnNum": 2048, // 最大连接数
+	"PendingNum": 100,  // gateway->client异步ipc队列上限
+	"MaxMsgLen": 1024,  // client->gateway message上限
+	"MinMsgLen": 0,     // client->gateway message下限
+	"ReadDeadline":60,  // gateway->client读超时
+	"WriteDeadline":60, // gateway->client写超时
+	"ServerAddress": "localhost:9527", // gateway地址
+	"MaxHeader":1024,   // header上限(for websocket)
+	"HttpTimeout": 10,  // http-get超时(for websocket)
+	"CertFile": "",     // for ssl
+	"KeyFile": "",      // for ssl
+	"Rpm":100,          // client->gateway流量上限/min
+	"AsyncMQ":64,       // service->gateway异步ipc队列上限
+	"GateWayIds":1999   // gateway本地路由id段(当前路由规则是简单的id分段规则)
+}
+```
 ### Message
 ```
 client->gateway
