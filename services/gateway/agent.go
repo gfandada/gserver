@@ -2,8 +2,10 @@
 package gateway
 
 import (
+	"fmt"
 	"time"
 
+	"github.com/gfandada/gserver/logger"
 	"github.com/gfandada/gserver/network"
 )
 
@@ -20,10 +22,13 @@ func (agent *Agent) Start(conn network.Iconn) {
 	config := agent.configdata
 	in := make(chan []byte)
 	defer close(in)
+	defer agent.Close()
 	var sess Session
 	sess.Die = make(chan struct{})
+	logger.Debug(fmt.Sprintf("agent run %v", agent.conn.RemoteAddr()))
 	if sender := startSender(conn, &sess, in, config); sender == nil {
 		close(sess.Die)
+		logger.Error(fmt.Sprintf("agent run sender nil"))
 		return
 	}
 	for {
@@ -43,7 +48,6 @@ func (agent *Agent) Start(conn network.Iconn) {
 			return
 		}
 	}
-	agent.Close()
 }
 
 func (agent *Agent) NewIagent() network.Iagent {
@@ -51,7 +55,7 @@ func (agent *Agent) NewIagent() network.Iagent {
 }
 
 func (agent *Agent) Close() {
-
+	logger.Debug(fmt.Sprintf("agent close %v", agent.conn.RemoteAddr()))
 }
 
 func (agent *Agent) GetUserData() interface{} {

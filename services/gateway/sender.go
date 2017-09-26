@@ -2,6 +2,9 @@
 package gateway
 
 import (
+	"fmt"
+
+	"github.com/gfandada/gserver/logger"
 	"github.com/gfandada/gserver/network"
 )
 
@@ -64,5 +67,6 @@ func startSender(conn network.Iconn, sess *Session, in <-chan []byte, config *ne
 	}
 	go cgs.run()
 	cgs.recver = startRecver(sess, in, cgs, config)
+	logger.Debug(fmt.Sprintf("sender run %v", conn.RemoteAddr()))
 	return cgs
 }

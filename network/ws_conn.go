@@ -1,9 +1,11 @@
 package network
 
 import (
+	"fmt"
 	"net"
 	"time"
 
+	"github.com/gfandada/gserver/logger"
 	"github.com/gorilla/websocket"
 )
 
@@ -37,5 +39,6 @@ func (conn *WsConn) SetWriteDeadline(t time.Time) error {
 }
 
 func (conn *WsConn) Close() {
+	logger.Debug(fmt.Sprintf("websocket close conn %v", conn.RemoteAddr()))
 	conn.conn.Close()
 }

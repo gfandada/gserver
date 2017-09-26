@@ -7,6 +7,7 @@ import (
 	"reflect"
 	"time"
 
+	"github.com/gfandada/gserver/logger"
 	"github.com/gfandada/gserver/network"
 	Services "github.com/gfandada/gserver/services"
 )
@@ -124,5 +125,6 @@ func startRecver(sess *Session, in <-chan []byte, out *gatesend, config *network
 		router:        startRouter(sess, config),
 	}
 	go gr.run()
+	logger.Debug(fmt.Sprintf("recver run %d", sess.UserId))
 	return gr
 }

@@ -89,7 +89,7 @@ func StartWs(config *Config) *WsServer {
 func (server *WsServer) start() {
 	listener := server.init()
 	if listener == nil {
-		logger.Error(fmt.Sprintf("http server start failed, %v"))
+		logger.Error(fmt.Sprintf("websocket-server start failed %v", server))
 		return
 	}
 	go server.run(listener)
@@ -98,19 +98,18 @@ func (server *WsServer) start() {
 func (handler *wsHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	if r.Method != "GET" {
 		http.Error(w, "Method not allowed", 405)
-		logger.Error("Method not allowed, %s", r.Method)
+		logger.Error("websocket-server Method not allowed, %s", r.Method)
 		return
 	}
 	conn, err := handler.upgrader.Upgrade(w, r, nil)
 	if err != nil {
-		logger.Error("upgrade error, %v", err)
+		logger.Error("websocket-server upgrade error, %v", err)
 		return
 	}
 	conn.SetReadLimit(int64(handler.maxMsgLen + 8))
 	defer func() {
 		if r := recover(); r != nil {
-			// TODO
-			fmt.Println("ws agent error:", r)
+			logger.Error(fmt.Sprintf("websocket-server agent error %v", r))
 		}
 	}()
 	handler.mutexConns.Lock()
@@ -129,40 +128,40 @@ func (handler *wsHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 func (server *WsServer) init() net.Listener {
 	listener, err := net.Listen("tcp", server.serverAddress)
 	if err != nil {
-		logger.Error(fmt.Sprintf("net.Listen error: %v", err))
+		logger.Error(fmt.Sprintf("websocket-server net.Listen error %v", err))
 		return nil
 	}
 	if server.maxHeader <= 0 {
-		server.maxHeader = 1024
-		logger.Warning(fmt.Sprintf("server.maxHeader <= 0, defalut 1024"))
+		server.maxHeader = 512
+		logger.Warning(fmt.Sprintf("websocket-server server.maxHeader <= 0, defalut 512"))
 	}
 	if server.maxConnNum <= 0 {
-		server.maxConnNum = 1000
-		logger.Warning(fmt.Sprintf("server.maxConnNum <= 0, defalut 1000"))
+		server.maxConnNum = 1024
+		logger.Warning(fmt.Sprintf("websocket-server server.maxConnNum <= 0, defalut 1024"))
 	}
 	if server.pendingNum <= 0 {
-		server.pendingNum = 100
-		logger.Warning(fmt.Sprintf("server.pendingNum <= 0, defalut 100"))
+		server.pendingNum = 64
+		logger.Warning(fmt.Sprintf("websocket-server server.pendingNum <= 0, defalut 64"))
 	}
 	if server.maxMsgLen <= 0 {
 		server.maxMsgLen = 512
-		logger.Warning(fmt.Sprintf("server.maxMsgLen <= 0, defalut 512"))
+		logger.Warning(fmt.Sprintf("websocket-server server.maxMsgLen <= 0, defalut 512"))
 	}
 	if server.minMsgLen < 0 {
 		server.minMsgLen = 0
-		logger.Warning(fmt.Sprintf("server.minMsgLen < 0, defalut 0"))
+		logger.Warning(fmt.Sprintf("websocket-server server.minMsgLen < 0, defalut 0"))
 	}
 	if server.httpTimeout <= 0 {
 		server.httpTimeout = 10
-		logger.Warning(fmt.Sprintf("server.httpTimeout <= 0, defalut 10s"))
+		logger.Warning(fmt.Sprintf("websocket-server server.httpTimeout <= 0, defalut 10s"))
 	}
 	if server.readTimeout <= 0 {
 		server.readTimeout = 10
-		logger.Warning(fmt.Sprintf("server.readTimeout <= 0, defalut 10s"))
+		logger.Warning(fmt.Sprintf("websocket-server server.readTimeout <= 0, defalut 10s"))
 	}
 	if server.writeTimeout <= 0 {
 		server.writeTimeout = 10
-		logger.Warning(fmt.Sprintf("server.writeTimeout <= 0, defalut 10s"))
+		logger.Warning(fmt.Sprintf("websocket-server server.writeTimeout <= 0, defalut 10s"))
 	}
 	// for ssl
 	if server.certFile != "" || server.keyFile != "" {
@@ -172,7 +171,7 @@ func (server *WsServer) init() net.Listener {
 		config.Certificates = make([]tls.Certificate, 1)
 		config.Certificates[0], err = tls.LoadX509KeyPair(server.certFile, server.keyFile)
 		if err != nil {
-			logger.Warning(fmt.Sprintf("wss error: %v", err))
+			logger.Warning(fmt.Sprintf("websocket-server ssl error %v", err))
 		}
 		listener = tls.NewListener(listener, config)
 	}
@@ -191,7 +190,7 @@ func (server *WsServer) init() net.Listener {
 		},
 	}
 	if server.msgParser == nil {
-		logger.Error("server.msgParser is nil %v", server)
+		logger.Error("websocket-server server.msgParser is nil")
 		return nil
 	}
 	server.handler.gate = server.gate
@@ -210,6 +209,8 @@ func (server *WsServer) run(listener net.Listener) {
 }
 
 func (server *WsServer) Close() {
+	logger.Debug(fmt.Sprintf("websocket-server close %v Accept conns %d",
+		server, len(server.handler.conns)))
 	server.serverListener.Close()
 	server.handler.mutexWG.Wait()
 	server.handler.mutexConns.Lock()

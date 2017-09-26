@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 
+	"github.com/gfandada/gserver/logger"
 	"github.com/gfandada/gserver/network"
 	Services "github.com/gfandada/gserver/services"
 	Discovery "github.com/gfandada/gserver/services/discovery"
@@ -126,5 +127,6 @@ func startRouter(sess *Session, config *network.Config) *router {
 	go r.run(sync)
 	<-sync
 	close(sync)
+	logger.Debug(fmt.Sprintf("router run %d", sess.UserId))
 	return r
 }
