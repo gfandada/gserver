@@ -2,6 +2,8 @@
 package gateway
 
 import (
+	"fmt"
+
 	Loader "github.com/gfandada/gserver/loader"
 	"github.com/gfandada/gserver/network"
 )
@@ -18,6 +20,7 @@ type TcpGateway struct {
 func (tcp *TcpGateway) OnInit() {
 	config := new(network.Config)
 	Loader.LoadJson(tcp.Config, config)
+	fmt.Println(config)
 	tcp.configdata = config
 	tcp.configdata.MsgParser = tcp.Coder
 	tcp.configdata.Parser = network.NewMessageParser()

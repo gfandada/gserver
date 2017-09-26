@@ -86,7 +86,7 @@ func (gr *gaterecv) one_timer_work() {
 		gr.sess.PacketCountOneMin = 0
 		gr.one_min_timer = time.After(time.Minute)
 	}()
-	if gr.sess.PacketCountOneMin > 100 {
+	if gr.sess.PacketCountOneMin > gr.config.Rpm {
 		gr.sess.Flag |= SESS_AUTHFAILED
 	}
 }
@@ -111,7 +111,7 @@ func startRecver(sess *Session, in <-chan []byte, out *gatesend, config *network
 	if sess == nil || out == nil || config == nil {
 		return nil
 	}
-	sess.MQ = make(chan network.Data_Frame, 512)
+	sess.MQ = make(chan network.Data_Frame, config.AsyncMQ)
 	sess.ConnectTime = time.Now()
 	sess.LastPacketTime = time.Now()
 	one_min_timer := time.After(time.Minute)

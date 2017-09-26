@@ -23,12 +23,15 @@ type Config struct {
 	ReadDeadline  int            // 读超时s
 	WriteDeadline int            // 写超时s
 	HttpTimeout   int            // http超时s
-	PendingNum    int            // gateway->client
+	PendingNum    int            // 异步队列上限：gateway->client
 	CertFile      string         // for ssl
 	KeyFile       string         // for ssl
 	MsgParser     Imessage       // for message
 	Parser        *MessageParser // for 报文
 	Gate          Iagent         // 网关
+	Rpm           int            // rpm流量上限：每分钟消息数client->gateway
+	AsyncMQ       int            // 异步队列上限：gateway->client
+	GateWayIds    uint16         // gateway内部路由的消息段[0,GateWayIds]
 }
 
 type WsServer struct {
