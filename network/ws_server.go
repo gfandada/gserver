@@ -16,22 +16,22 @@ import (
 
 type Config struct {
 	ServerAddress string         // 服务地址
-	MaxHeader     int            // header大小限制，byte
 	MaxConnNum    int            // 最大连接数
-	MaxMsgLen     int            // 单消息的最大长度
-	MinMsgLen     int            // 单消息的最小长度
-	ReadDeadline  int            // 读超时s
-	WriteDeadline int            // 写超时s
-	HttpTimeout   int            // http超时s
-	PendingNum    int            // 异步队列上限：gateway->client
+	MaxMsgLen     int            // client->gateway message上限
+	MinMsgLen     int            // client->gateway message下限
+	ReadDeadline  int            // gateway->client读超时
+	WriteDeadline int            // gateway->client写超时
+	MaxHeader     int            // header上限(for websocket)
+	HttpTimeout   int            // http-get超时(for websocket)
 	CertFile      string         // for ssl
 	KeyFile       string         // for ssl
 	MsgParser     Imessage       // for message
 	Parser        *MessageParser // for 报文
 	Gate          Iagent         // 网关
-	Rpm           int            // rpm流量上限：每分钟消息数client->gateway
-	AsyncMQ       int            // 异步队列上限：gateway->client
-	GateWayIds    uint16         // gateway内部路由的消息段[0,GateWayIds]
+	PendingNum    int            // gateway->client异步ipc队列上限
+	Rpm           int            // client->gateway流量上限/min
+	AsyncMQ       int            // service->gateway异步ipc队列上限
+	GateWayIds    uint16         // gateway本地路由id段(当前路由规则是简单的id分段规则)
 }
 
 type WsServer struct {
