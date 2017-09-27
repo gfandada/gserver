@@ -17,8 +17,8 @@ import (
 type Config struct {
 	ServerAddress string         // 服务地址
 	MaxConnNum    int            // 最大连接数
-	MaxMsgLen     int            // client->gateway message上限
-	MinMsgLen     int            // client->gateway message下限
+	MaxMsgLen     int            // client<->gateway message上限
+	MinMsgLen     int            // client<->gateway message下限
 	ReadDeadline  int            // gateway->client读超时
 	WriteDeadline int            // gateway->client写超时
 	MaxHeader     int            // header上限(for websocket)
