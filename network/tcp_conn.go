@@ -3,12 +3,9 @@ package network
 import (
 	"bytes"
 	"encoding/binary"
-	"fmt"
 	"io"
 	"net"
 	"time"
-
-	"github.com/gfandada/gserver/logger"
 )
 
 type TcpConn struct {
@@ -60,7 +57,6 @@ func (conn *TcpConn) SetWriteDeadline(t time.Time) error {
 }
 
 func (conn *TcpConn) Close() {
-	logger.Debug(fmt.Sprintf("tcp close conn %v", conn.RemoteAddr()))
 	// default drop data
 	conn.conn.(*net.TCPConn).SetLinger(0)
 	conn.conn.Close()

@@ -209,7 +209,7 @@ func (server *WsServer) run(listener net.Listener) {
 }
 
 func (server *WsServer) Close() {
-	logger.Debug(fmt.Sprintf("websocket-server close %v Accept conns %d",
+	logger.Info(fmt.Sprintf("websocket-server close %v Accept conns %d",
 		server, len(server.handler.conns)))
 	server.serverListener.Close()
 	server.handler.mutexWG.Wait()

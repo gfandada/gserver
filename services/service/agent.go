@@ -41,18 +41,17 @@ func (s *Agent) Stream(stream network.Service_StreamServer) error {
 	sess.UserId = userid
 	s.sess = sess
 	Add(userid, sess)
-	logger.Debug(fmt.Sprintf("Stream run %d", s.sess.UserId))
 	for {
 		select {
 		case frame, ok := <-in:
 			if !ok {
-				logger.Error(fmt.Sprintf("Stream error %v", err))
+				logger.Error(fmt.Sprintf("Stream agent %v error %v", s, err))
 				return nil
 			}
 			s.handler(stream, frame)
 		case frame := <-sess.MQ:
 			if err := stream.Send(&frame); err != nil {
-				logger.Error(fmt.Sprintf("Stream send error %v", err))
+				logger.Error(fmt.Sprintf("Stream agent %v send error %v", s, err))
 				return err
 			}
 		}

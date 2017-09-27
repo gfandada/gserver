@@ -2,9 +2,6 @@
 package gateway
 
 import (
-	"fmt"
-
-	"github.com/gfandada/gserver/logger"
 	"github.com/gfandada/gserver/network"
 )
 
@@ -29,7 +26,7 @@ func (gtc *gatesend) send(data []byte) {
 	}
 	select {
 	case gtc.pending <- data:
-	default: // 直接丢包
+	default: // default drop data
 	}
 }
 
@@ -47,7 +44,7 @@ func (gtc *gatesend) run() {
 func (gtc *gatesend) raw_send(data []byte) {
 	msg, err := gtc.config.Parser.Write(data)
 	if err == nil {
-		// TODO ignore failed
+		// FIXME ignore failed
 		gtc.conn.WriteMsg(msg)
 	}
 }
@@ -67,6 +64,5 @@ func startSender(conn network.Iconn, sess *Session, in <-chan []byte, config *ne
 	}
 	go cgs.run()
 	cgs.recver = startRecver(sess, in, cgs, config)
-	logger.Debug(fmt.Sprintf("sender run %v", conn.RemoteAddr()))
 	return cgs
 }

@@ -120,7 +120,7 @@ func (server *TcpServer) run(listener net.Listener) {
 }
 
 func (server *TcpServer) Close() {
-	logger.Debug(fmt.Sprintf("tcp-server close %v Accept conns %d",
+	logger.Info(fmt.Sprintf("tcp-server close %v Accept conns %d",
 		server, len(server.conns)))
 	server.serverListener.Close()
 	server.mutexWG.Wait()

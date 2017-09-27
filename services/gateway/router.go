@@ -28,6 +28,7 @@ func (r *router) run(sync chan struct{}) {
 	ctx := metadata.NewContext(context.Background(), metadata.New(map[string]string{"userid": fmt.Sprint(r.sess.UserId)}))
 	stream, err := cli.Stream(ctx)
 	if err != nil {
+		logger.Error(fmt.Sprintf("router %v get stream error %v", r, err))
 		return
 	}
 	r.sess.Stream = stream
@@ -124,9 +125,8 @@ func startRouter(sess *Session, config *network.Config) *router {
 		config: config,
 	}
 	sync := make(chan struct{}, 1)
+	defer close(sync)
 	go r.run(sync)
 	<-sync
-	close(sync)
-	logger.Debug(fmt.Sprintf("router run %d", sess.UserId))
 	return r
 }

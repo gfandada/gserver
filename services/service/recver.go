@@ -21,11 +21,11 @@ func (re *recver) run() {
 	for {
 		data, err := re.stream.Recv()
 		if err == io.EOF { // 正常流关闭
-			logger.Debug("Stream recver io.EOF")
+			logger.Debug(fmt.Sprintf("Stream recver %v io.EOF", re))
 			return
 		}
 		if err != nil { // 流错误
-			logger.Error(fmt.Sprintf("Stream recver error %v", err))
+			logger.Error(fmt.Sprintf("Stream recver %v error %v", re, err))
 			return
 		}
 		select {
@@ -44,6 +44,5 @@ func startRecver(stream network.Service_StreamServer, die chan struct{}) chan *n
 		in:     ch,
 	}
 	go re.run()
-	logger.Debug("Stream recver run")
 	return ch
 }
