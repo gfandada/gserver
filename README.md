@@ -20,6 +20,7 @@ next version-v0.9.0 will focus on:
 2.optimize microservice  
 3.add inner logger  
 4.add tcp gateway -- DONE
+5.add game util package(aoi,space....)
 ### CONF
 ```
 更全的配置请查看demo工程
