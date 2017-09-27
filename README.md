@@ -26,8 +26,8 @@ next version-v0.9.0 will focus on:
 {
 	"MaxConnNum": 2048, // 最大连接数
 	"PendingNum": 100,  // gateway->client异步ipc队列上限
-	"MaxMsgLen": 1024,  // client->gateway message上限
-	"MinMsgLen": 0,     // client->gateway message下限
+	"MaxMsgLen": 1024,  // client<->gateway message上限
+	"MinMsgLen": 0,     // client<->gateway message下限
 	"ReadDeadline":60,  // gateway->client读超时
 	"WriteDeadline":60, // gateway->client写超时
 	"ServerAddress": "localhost:9527", // gateway地址
