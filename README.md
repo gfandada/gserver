@@ -19,7 +19,7 @@ next version-v0.9.0 will focus on:
 1.optimize safe  
 2.optimize microservice  
 3.add inner logger  
-4.add tcp gateway -- DONE
+4.add tcp gateway -- DONE  
 5.add game util package(aoi,space....)
 ### CONF
 ```
