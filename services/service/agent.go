@@ -35,6 +35,7 @@ func (s *Agent) Stream(stream network.Service_StreamServer) error {
 		close(sess.Die)
 	}()
 	userid, err := s.getUserId(stream)
+	fmt.Println("stream agent userid ", userid, err)
 	if err != nil {
 		return err
 	}

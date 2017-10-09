@@ -97,16 +97,24 @@ func (r *router) ackhandler(ack []interface{}) []byte {
 	if ack == nil {
 		return nil
 	}
-	data, err := r.config.MsgParser.Serialize(ack[0].(network.RawMessage))
-	if err != nil {
-		return Services.NewInError(err)
+	var data []byte
+	var err error
+	if ack[0] != nil {
+		data, err = r.config.MsgParser.Serialize(ack[0].(network.RawMessage))
+		if err != nil {
+			return Services.NewInError(err)
+		}
 	}
 	switch len(ack) {
 	case 1:
 		return data
 	case 2:
 		// update session
-		r.sess.UserId = ack[0].(int32)
+		r.sess.UserId = ack[1].(int32)
+		sync := make(chan struct{}, 1)
+		defer close(sync)
+		go r.run(sync)
+		<-sync
 		return data
 	default:
 	}
@@ -124,9 +132,9 @@ func startRouter(sess *Session, config *network.Config) *router {
 		sess:   sess,
 		config: config,
 	}
-	sync := make(chan struct{}, 1)
-	defer close(sync)
-	go r.run(sync)
-	<-sync
+	//	sync := make(chan struct{}, 1)
+	//	defer close(sync)
+	//	go r.run(sync)
+	//	<-sync
 	return r
 }
