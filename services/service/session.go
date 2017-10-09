@@ -87,3 +87,9 @@ func Send(id int32, msg network.RawMessage) {
 func Count() int {
 	return _sessionm.count()
 }
+
+func ForEachSend(msg network.RawMessage) {
+	for userid := range _sessionm.pool {
+		Send(userid, msg)
+	}
+}
