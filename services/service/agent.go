@@ -127,7 +127,7 @@ func (s *Agent) dohandler(data []byte) *network.Data_Frame {
 		if err != nil {
 			return nil
 		}
-		ack := s.ackhandler(hand([]interface{}{ret.MsgData}))
+		ack := s.ackhandler(hand([]interface{}{ret}))
 		if ack != nil {
 			ackdata, erra := s.msgParser.Serialize(ack.(network.RawMessage))
 			if erra != nil {
