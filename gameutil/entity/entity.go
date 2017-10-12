@@ -3,6 +3,7 @@ package entity
 import (
 	"fmt"
 
+	Network "github.com/gfandada/gserver/network"
 	"github.com/gfandada/gserver/util"
 )
 
@@ -21,6 +22,7 @@ func NewEntity(desc *EntityDesc) *Entity {
 		Id:        EntityId(util.NewV4().String()),
 		Desc:      desc,
 		Destroyed: false,
+		Client:    new(GameClient),
 	}
 	initAOI(&e.aoi)
 	return e
@@ -120,6 +122,25 @@ func (e *Entity) MoveSpace(pos Vector3) {
 	} else {
 		fmt.Println("entity MoveSpace space is nil")
 	}
+}
+
+/*********************************与client交互********************************/
+
+// 绑定clientid
+// FIXME 绑定适当的client可以让entity具有网络传输能力
+func (e *Entity) BindGameClient(clientid int32) {
+	e.Client.clientid = clientid
+}
+
+// 异步消息
+func (e *Entity) Post(msg Network.RawMessage) {
+	defer func() {
+		if r := recover(); r != nil {
+			// ...
+			fmt.Println("post error ", r)
+		}
+	}()
+	go e.Client.Post(msg)
 }
 
 /*********************************实现Ientity接口********************************/
