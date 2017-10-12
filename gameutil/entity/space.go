@@ -1,21 +1,41 @@
+// space统一维护aoi数据的变化
+// 不可也没有必要并发调用space接口
 package entity
 
 import (
 	"fmt"
+
+	"github.com/gfandada/gserver/util"
 )
 
-// Space定义
 type Space struct {
-	Entity                  // space也是一种Entity
-	entities EntitySet      // space中的entity容器
-	Kind     int            // space类型
+	Id       SpaceId        // 场景id
+	Type     int            // space类型
 	I        Ispace         // space装载器
 	aoiCalc  Iaoicalculator // aoi计算器
+	entities EntitySet      // space中的entity容器
+}
+
+func NewSpace(spaceType int, ispace Ispace) *Space {
+	return &Space{
+		Id:       SpaceId(util.NewV4().String()),
+		Type:     spaceType,
+		I:        ispace,
+		aoiCalc:  newXZListAOICalculator(),
+		entities: EntitySet{},
+	}
+}
+
+func (space *Space) String() string {
+	if space.Type != 0 {
+		return fmt.Sprintf("Space<%d:%s>", space.Type, space.Id)
+	}
+	return "Space<nil>"
 }
 
 // 检查是不是空场景
 func (space *Space) IsNil() bool {
-	return space.Kind == 0
+	return space.Type == NIL_SPACE
 }
 
 // entity离开space
@@ -36,7 +56,6 @@ func (space *Space) leave(entity *Entity) {
 	entity.Space = nil
 	space.I.OnEntityLeaveSpace(entity)
 	entity.I.OnLeaveSpace(space)
-	// TODO 通知client
 }
 
 // entity进入space
@@ -53,7 +72,6 @@ func (space *Space) enter(entity *Entity, pos Vector3, isRestore bool) {
 	space.entities.Add(entity)
 	space.aoiCalc.Enter(&entity.aoi, pos)
 	if !isRestore {
-		// TODO 通知client
 		enter, _ := space.aoiCalc.Adjust(&entity.aoi)
 		// 和第一次的新邻居互相关注
 		for _, naoi := range enter {
@@ -93,36 +111,6 @@ func (space *Space) move(entity *Entity, newPos Vector3) {
 		entity.interest(neighbor)
 		neighbor.interest(entity)
 	}
-}
-
-func (space *Space) OnInit() {
-	space.entities = EntitySet{}
-	space.I = space.Entity.I.(Ispace)
-	space.aoiCalc = newXZListAOICalculator()
-	space.I.OnSpaceInit()
-}
-
-func (space *Space) OnDestroy() {
-	for e := range space.entities {
-		e.Destroy()
-	}
-	_spaceManager.delSpace(space.ID)
-}
-
-func (space *Space) String() string {
-	if space.Kind != 0 {
-		return fmt.Sprintf("Space<%d|%s>", space.Kind, space.ID)
-	}
-	return "Space<nil>"
-}
-
-func (space *Space) OnCreated() {
-	space.onSpaceCreated()
-	space.I.OnSpaceCreated()
-}
-
-func (space *Space) onSpaceCreated() {
-	_spaceManager.putSpace(space)
 }
 
 /*********************************实现Ispace接口*******************************/

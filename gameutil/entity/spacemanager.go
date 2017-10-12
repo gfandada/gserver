@@ -1,44 +1,50 @@
 package entity
 
 import (
-	"reflect"
+	"sync"
 )
 
 var (
-	_spaceManager *SpaceManager
-	_spaceType    reflect.Type
+	_spacemanager *SpaceManager
 )
 
 type SpaceManager struct {
-	spaces map[EntityID]*Space // space-id和space的映射关系
+	spaces map[SpaceId]*Space
+	sync.RWMutex
 }
 
 func init() {
-	_spaceManager = newSpaceManager()
-}
-
-func newSpaceManager() *SpaceManager {
-	return &SpaceManager{
-		spaces: map[EntityID]*Space{},
+	_spacemanager = &SpaceManager{
+		spaces: make(map[SpaceId]*Space),
 	}
 }
 
-func (spmgr *SpaceManager) putSpace(space *Space) {
-	spmgr.spaces[space.ID] = space
+func (manager *SpaceManager) put(space *Space) {
+	manager.Lock()
+	defer manager.Unlock()
+	manager.spaces[space.Id] = space
 }
 
-func (spmgr *SpaceManager) delSpace(id EntityID) {
-	delete(spmgr.spaces, id)
+func (manager *SpaceManager) del(spaceid SpaceId) {
+	manager.Lock()
+	defer manager.Unlock()
+	delete(manager.spaces, spaceid)
 }
 
-func (spmgr *SpaceManager) getSpace(id EntityID) *Space {
-	return spmgr.spaces[id]
+func (manager *SpaceManager) get(spaceid SpaceId) *Space {
+	manager.RLock()
+	defer manager.RUnlock()
+	return manager.spaces[spaceid]
 }
 
-// 注册场景(场景是一种特殊的entity)
-// @params spacePtr:场景装载器
-func RegisterSpace(spacePtr Ispace) {
-	spaceVal := reflect.Indirect(reflect.ValueOf(spacePtr))
-	_spaceType = spaceVal.Type()
-	RegisterEntity(_SPACE_ENTITY_TYPE, spacePtr.(Ientity), false, false)
+func RegisterSpace(space *Space) {
+	_spacemanager.put(space)
+}
+
+func UnRegisterSpace(space SpaceId) {
+	_spacemanager.del(space)
+}
+
+func GetSpace(space SpaceId) *Space {
+	return _spacemanager.get(space)
 }
