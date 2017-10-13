@@ -74,6 +74,7 @@ func (t *Test) name() string {
 
 func (t *Test) timer() time.Duration {
 	return time.Millisecond * 200
+	// return 0
 }
 
 func (t *Test) timer_work() {
