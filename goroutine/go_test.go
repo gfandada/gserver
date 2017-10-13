@@ -72,6 +72,14 @@ func (t *Test) name() string {
 	return "calc"
 }
 
+func (t *Test) timer() time.Duration {
+	return time.Millisecond * 200
+}
+
+func (t *Test) timer_work() {
+	fmt.Println("11111111111111111111内置定时器1111111111111111111111")
+}
+
 func (t *Test) initGo() {
 	fmt.Println("init..............")
 }

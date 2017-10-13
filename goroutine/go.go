@@ -32,26 +32,57 @@ type message struct {
 // 新建并运行一个本地进程
 // @params igo：进程的装载器
 // @return 携程id，错误描述
-func Start(igo Igo) (uint64, error) {
+func Start(igo Igo) (pid uint64, err error) {
+	defer func() {
+		if r := recover(); r != nil {
+			err = fmt.Errorf("%v", r)
+		}
+	}()
 	done := make(chan uint64, 1)
-	loop := func() {
-		pid, v := initGo(igo)
-		done <- pid
-		defer closeGo(pid, igo, v)
-		for {
-			select {
-			case input := <-v.chanMsg:
-				if input == nil {
-					break
+	timeD := igo.timer()
+	var loop func()
+	var v *Goroutine
+	if timeD <= 0 {
+		loop = func() {
+			pid, v = initGo(igo)
+			done <- pid
+			defer closeGo(pid, igo, v)
+			for {
+				select {
+				case input := <-v.chanMsg:
+					if input == nil {
+						break
+					}
+					handler(igo, input)
+				case <-v.chanControl:
+					return
 				}
-				handler(igo, input)
-			case <-v.chanControl:
-				return
+			}
+		}
+	} else {
+		timer := time.After(timeD)
+		loop = func() {
+			pid, v = initGo(igo)
+			done <- pid
+			defer closeGo(pid, igo, v)
+			for {
+				select {
+				case input := <-v.chanMsg:
+					if input == nil {
+						break
+					}
+					handler(igo, input)
+				case <-timer:
+					timer = time.After(igo.timer())
+					timer_work(igo)
+				case <-v.chanControl:
+					return
+				}
 			}
 		}
 	}
 	go loop()
-	pid := <-done
+	pid = <-done
 	if pid != 0 {
 		return pid, nil
 	}
@@ -189,4 +220,8 @@ func handler(igo Igo, input *message) {
 		}
 	}()
 	igo.handler(input.msg, input.args, input.chanRecv)
+}
+
+func timer_work(igo Igo) {
+	igo.timer_work()
 }
