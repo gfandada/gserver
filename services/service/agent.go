@@ -50,7 +50,7 @@ func (s *Agent) Stream(stream network.Service_StreamServer) error {
 				return nil
 			}
 			s.handler(stream, frame)
-		case frame := <-sess.MQ:
+		case frame := <-s.sess.MQ:
 			if err := stream.Send(&frame); err != nil {
 				logger.Error(fmt.Sprintf("Stream agent %v send error %v", s, err))
 				return err
