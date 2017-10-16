@@ -21,7 +21,7 @@ type Session struct {
 	UserId   int32                   // 玩家ID
 	Die      chan struct{}           // 会话关闭信号
 	Flag     int32                   // 会话标记
-	UserData []interface{}           // 用户自定义sess数据
+	UserData map[string]interface{}  // 用户自定义sess数据
 }
 
 func init() {
