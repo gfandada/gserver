@@ -126,7 +126,7 @@ func (s *Agent) dohandler(data []byte) *network.Data_Frame {
 		if err != nil {
 			return nil
 		}
-		ack := s.ackhandler(hand([]interface{}{ret}))
+		ack := s.ackhandler(hand([]interface{}{ret, s.sess}))
 		if ack != nil {
 			ackdata, erra := s.msgParser.Serialize(ack.(network.RawMessage))
 			if erra != nil {
@@ -149,10 +149,7 @@ func (s *Agent) ackhandler(ack []interface{}) interface{} {
 	switch len(ack) {
 	case 1:
 		return ack[0]
-	case 2:
-		s.sess.UserData = []interface{}{ack[1]}
-		return ack[0]
 	default:
+		return nil
 	}
-	return nil
 }
