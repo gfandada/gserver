@@ -56,6 +56,20 @@ func (s *SessionManger) count() int {
 	return len(s.pool)
 }
 
+/**************************自定义session(非线程安全)*****************************/
+
+func (s *Session) AddData(key string, data interface{}) {
+	s.UserData[key] = data
+}
+
+func (s *Session) DelData(key string) {
+	delete(s.UserData, key)
+}
+
+func (s *Session) Get(key string) interface{} {
+	return s.UserData[key]
+}
+
 func New() *Session {
 	sess := new(Session)
 	sess.Die = make(chan struct{})
