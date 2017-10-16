@@ -70,6 +70,11 @@ func (s *Session) Get(key string) interface{} {
 	return s.UserData[key]
 }
 
+func (s *Session) IsExist(key string) bool {
+	_, ok := s.UserData[key]
+	return ok
+}
+
 func New() *Session {
 	sess := new(Session)
 	sess.Die = make(chan struct{})
