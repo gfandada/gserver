@@ -68,24 +68,28 @@ func Test_go(t *testing.T) {
 type Test struct {
 }
 
-func (t *Test) name() string {
+func (t *Test) Name() string {
 	return "calc"
 }
 
-func (t *Test) timer() time.Duration {
+func (t *Test) Timer() time.Duration {
 	return time.Millisecond * 200
 	// return 0
 }
 
-func (t *Test) timer_work() {
+func (t *Test) Timer_work() {
 	fmt.Println("11111111111111111111内置定时器1111111111111111111111")
 }
 
-func (t *Test) initGo() {
+func (t *Test) InitGo() {
 	fmt.Println("init..............")
 }
 
-func (t *Test) handler(msg string, args []interface{}, ret chan []interface{}) {
+func (t *Test) CloseGo() {
+	fmt.Println("close..............")
+}
+
+func (t *Test) Handler(msg string, args []interface{}, ret chan []interface{}) {
 	fmt.Println("handler..............", msg, args)
 	// 异步的嘛
 	if ret == nil {
@@ -101,8 +105,4 @@ func (t *Test) handler(msg string, args []interface{}, ret chan []interface{}) {
 	case "*":
 		ret <- []interface{}{args[0].(int) * args[1].(int)}
 	}
-}
-
-func (t *Test) closeGo() {
-	fmt.Println("close..............")
 }

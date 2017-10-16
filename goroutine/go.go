@@ -39,7 +39,7 @@ func Start(igo Igo) (pid uint64, err error) {
 		}
 	}()
 	done := make(chan uint64, 1)
-	timeD := igo.timer()
+	timeD := igo.Timer()
 	var loop func()
 	var v *Goroutine
 	if timeD <= 0 {
@@ -73,7 +73,7 @@ func Start(igo Igo) (pid uint64, err error) {
 					}
 					handler(igo, input)
 				case <-timer:
-					timer = time.After(igo.timer())
+					timer = time.After(igo.Timer())
 					timer_work(igo)
 				case <-v.chanControl:
 					return
@@ -201,16 +201,16 @@ func initGo(igo Igo) (uint64, *Goroutine) {
 		chanMsg:     make(chan *message, 10000),
 		chanControl: make(chan struct{}, 1),
 	}
-	Register(id, igo.name(), v)
-	igo.initGo()
+	Register(id, igo.Name(), v)
+	igo.InitGo()
 	return id, v
 }
 
 func closeGo(id uint64, igo Igo, v *Goroutine) {
-	Unregister(id, igo.name())
+	Unregister(id, igo.Name())
 	close(v.chanControl)
 	close(v.chanMsg)
-	igo.closeGo()
+	igo.CloseGo()
 }
 
 func handler(igo Igo, input *message) {
@@ -219,9 +219,9 @@ func handler(igo Igo, input *message) {
 			logger.Error("goroutine handler panic input %v error: %v", input, r)
 		}
 	}()
-	igo.handler(input.msg, input.args, input.chanRecv)
+	igo.Handler(input.msg, input.args, input.chanRecv)
 }
 
 func timer_work(igo Igo) {
-	igo.timer_work()
+	igo.Timer_work()
 }

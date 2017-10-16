@@ -5,10 +5,10 @@ import (
 )
 
 type Igo interface {
-	name() string                                                   // 设置进程别名
-	timer() time.Duration                                           // 绑定定时器
-	timer_work()                                                    // 定时器回调
-	initGo()                                                        // 初始化
-	handler(msg string, args []interface{}, ret chan []interface{}) // 执行体
-	closeGo()                                                       // 关闭
+	Name() string                                                   // 设置进程别名
+	Timer() time.Duration                                           // 绑定定时器
+	Timer_work()                                                    // 定时器回调
+	InitGo()                                                        // 初始化
+	Handler(msg string, args []interface{}, ret chan []interface{}) // 执行体
+	CloseGo()                                                       // 关闭
 }
