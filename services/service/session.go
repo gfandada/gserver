@@ -79,6 +79,7 @@ func New() *Session {
 	sess := new(Session)
 	sess.Die = make(chan struct{})
 	sess.MQ = make(chan network.Data_Frame, DEFAULT_CH_SIZE)
+	sess.UserData = make(map[string]interface{})
 	return sess
 }
 
