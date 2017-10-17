@@ -3,7 +3,6 @@ package entity
 import (
 	"fmt"
 
-	Network "github.com/gfandada/gserver/network"
 	"github.com/gfandada/gserver/util"
 )
 
@@ -133,14 +132,14 @@ func (e *Entity) BindGameClient(clientid int32) {
 }
 
 // 异步消息
-func (e *Entity) Post(msg Network.RawMessage) {
+func (e *Entity) Post(users []*Entity, msg interface{}) {
 	defer func() {
 		if r := recover(); r != nil {
 			// ...
 			fmt.Println("post error ", r)
 		}
 	}()
-	go e.Client.Post(msg)
+	go e.Client.Post(users, msg)
 }
 
 /*********************************实现Ientity接口********************************/

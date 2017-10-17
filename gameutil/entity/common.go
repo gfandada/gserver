@@ -16,11 +16,11 @@ const (
 )
 
 const (
-	NEUTRAL_FLAG        = 0 // 中立方
-	ENEMY_SHIP_FLAG     = 1 // 敌方战船
-	FRIEND_SHIP_FLAG    = 2 // 我方战船
-	ENEMY_SOLDIER_FLAG  = 3 // 敌方小兵
-	FRIEND_SOLDIER_FLAG = 4 // 我方小兵
-	ENEMY_TOWER_FLAG    = 5 // 敌方防御塔
-	FRIEND_TOWER_FLAG   = 6 // 我方防御塔
+	NEUTRAL_FLAG      = 0 // 中立方
+	BLUE_SHIP_FLAG    = 1 // 蓝色方战船
+	RED_SHIP_FLAG     = 2 // 红色方战船
+	BLUE_SOLDIER_FLAG = 3 // 蓝色方小兵
+	RED_SOLDIER_FLAG  = 4 // 红色方小兵
+	BLUE_TOWER_FLAG   = 5 // 蓝色方防御塔
+	RED_TOWER_FLAG    = 6 // 红色方防御塔
 )

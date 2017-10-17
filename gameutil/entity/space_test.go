@@ -24,7 +24,8 @@ func Test_space(t *testing.T) {
 			entity := NewEntity(&EntityDesc{
 				Name:   "entity" + strconv.Itoa(i) + ":" + strconv.Itoa(j),
 				UseAOI: true,
-			}, new(Entity))
+			})
+			entity.BindIentity(new(Entity))
 			RegisterEntity(entity)
 			entity.EnterSpace(space.Id, Vector3{
 				X: Coord(i),
