@@ -1,0 +1,8 @@
+{	
+	"User": "root",
+	"Password": "123456",
+	"Host": "192.168.78.130:3306",
+	"Db": "gs",
+	"MaxOpenConns": 16,
+	"MaxIdleConns": 4
+}

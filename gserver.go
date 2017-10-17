@@ -2,6 +2,7 @@
 package gserver
 
 import (
+	DB "github.com/gfandada/gserver/db"
 	Logger "github.com/gfandada/gserver/logger"
 	Module "github.com/gfandada/gserver/module"
 	Network "github.com/gfandada/gserver/network"
@@ -57,4 +58,11 @@ func RegisterHandler(list []*Services.MsgHandler) {
 	for _, v := range list {
 		Services.Register(v.MsgId, v.MsgHandler)
 	}
+}
+
+// 启动mysql数据库
+// @params log:日志配置 path:数据库日志
+func RunMysqlService(log, path string) {
+	Logger.Start(log)
+	DB.NewMysql(path)
 }

@@ -78,14 +78,7 @@ func Test_mysql(t *testing.T) {
 	//	tx.Commit()
 
 	// 使用封装的接口查询
-	NewMysql(&Mysql{
-		User:         "root",
-		Password:     "123456",
-		Host:         "192.168.78.130:3306",
-		Db:           "gs",
-		MaxOpenConns: 16,
-		MaxIdleConns: 4,
-	})
+	NewMysql("./mysql.json")
 	ret, err := Query("SELECT * FROM userinfo where uid=5")
 	if err != nil {
 		t.Error(err)

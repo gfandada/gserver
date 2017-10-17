@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"fmt"
 
+	Loader "github.com/gfandada/gserver/loader"
 	"github.com/gfandada/gserver/logger"
 	_ "github.com/go-sql-driver/mysql"
 )
@@ -24,7 +25,9 @@ type Mysql struct {
 
 type CallBack func() error
 
-func NewMysql(cfg *Mysql) {
+func NewMysql(path string) {
+	cfg := new(Mysql)
+	Loader.LoadJson(path, cfg)
 	var err error
 	dataSourceName := fmt.Sprintf("%s:%s@tcp(%s)/%s?charset=utf8",
 		cfg.User, cfg.Password, cfg.Host, cfg.Db)
