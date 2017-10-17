@@ -173,6 +173,30 @@ func Cast(pid uint64, msg string, args []interface{}) error {
 	return nil
 }
 
+// 异步请求
+// @params name:进程名称 msg:请求消息 args:消息参数
+// @return 错误描述
+func CastByName(name string, msg string, args []interface{}) error {
+	var err error
+	defer func() {
+		if r := recover(); r != nil {
+			err = fmt.Errorf("%v", r)
+		}
+	}()
+	v := QueryByName(name)
+	if v == nil {
+		return errors.New("goroutine is not exist")
+	}
+	select {
+	case v.chanMsg <- &message{
+		msg:  msg,
+		args: args,
+	}:
+	default: // 默认丢包
+	}
+	return nil
+}
+
 // 获取排队消息数量
 // @params pid:进程id
 // @return 排队消息数量
