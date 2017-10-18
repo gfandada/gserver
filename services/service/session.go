@@ -4,6 +4,7 @@ import (
 	"sync"
 
 	"github.com/gfandada/gserver/network"
+	Services "github.com/gfandada/gserver/services"
 )
 
 var (
@@ -16,12 +17,12 @@ type SessionManger struct {
 }
 
 type Session struct {
-	MQ       chan network.Data_Frame // 返回给网关的异步消息
-	Agent    *Agent                  // 代理器
-	UserId   int32                   // 玩家ID
-	Die      chan struct{}           // 会话关闭信号
-	Flag     int32                   // 会话标记
-	UserData map[string]interface{}  // 用户自定义sess数据
+	MQ        chan network.Data_Frame // 返回给网关的异步消息
+	msgParser network.Imessage        // 消息解析器
+	UserId    int32                   // 玩家ID
+	Die       chan struct{}           // 会话关闭信号
+	Flag      int32                   // 会话标记
+	UserData  map[string]interface{}  // 用户自定义sess数据
 }
 
 func init() {
@@ -75,11 +76,12 @@ func (s *Session) IsExist(key string) bool {
 	return ok
 }
 
-func New() *Session {
+func New(msgParser network.Imessage) *Session {
 	sess := new(Session)
 	sess.Die = make(chan struct{})
 	sess.MQ = make(chan network.Data_Frame, DEFAULT_CH_SIZE)
 	sess.UserData = make(map[string]interface{})
+	sess.msgParser = msgParser
 	return sess
 }
 
@@ -101,7 +103,17 @@ func Send(id int32, msg network.RawMessage) {
 	if sess == nil {
 		return
 	}
-	sess.Agent.Send(msg)
+	ackdata, err := sess.msgParser.Serialize(msg)
+	var data *network.Data_Frame
+	if err != nil {
+		data = Services.NewSInError(err)
+	} else {
+		data = &network.Data_Frame{
+			Type:    network.Data_Message,
+			Message: ackdata,
+		}
+	}
+	sess.MQ <- *data
 }
 
 func Count() int {

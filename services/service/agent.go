@@ -23,12 +23,10 @@ var (
 
 type Agent struct {
 	msgParser network.Imessage
-	sess      *Session
 }
 
 func (s *Agent) Stream(stream network.Service_StreamServer) error {
-	sess := New()
-	sess.Agent = s
+	sess := New(s.msgParser)
 	in := startRecver(stream, sess.Die)
 	defer func() {
 		Remove(sess.UserId)
@@ -39,7 +37,6 @@ func (s *Agent) Stream(stream network.Service_StreamServer) error {
 		return err
 	}
 	sess.UserId = userid
-	s.sess = sess
 	Add(userid, sess)
 	for {
 		select {
@@ -48,8 +45,8 @@ func (s *Agent) Stream(stream network.Service_StreamServer) error {
 				logger.Error(fmt.Sprintf("Stream agent %v error %v", s, err))
 				return nil
 			}
-			s.handler(stream, frame)
-		case frame := <-s.sess.MQ:
+			s.handler(stream, frame, sess)
+		case frame := <-sess.MQ:
 			if err := stream.Send(&frame); err != nil {
 				logger.Error(fmt.Sprintf("Stream agent %v send error %v", s, err))
 				return err
@@ -78,7 +75,7 @@ func (s *Agent) send(stream network.Service_StreamServer, frame *network.Data_Fr
 	return stream.Send(frame)
 }
 
-func (s *Agent) handler(stream network.Service_StreamServer, frame *network.Data_Frame) error {
+func (s *Agent) handler(stream network.Service_StreamServer, frame *network.Data_Frame, sess *Session) error {
 	defer func() {
 		if r := recover(); r != nil {
 			switch reflect.TypeOf(r).Name() {
@@ -91,7 +88,7 @@ func (s *Agent) handler(stream network.Service_StreamServer, frame *network.Data
 	}()
 	switch frame.Type {
 	case network.Data_Message:
-		return s.send(stream, s.dohandler(frame.Message))
+		return s.send(stream, s.dohandler(frame.Message, sess))
 	case network.Data_Ping:
 		return s.send(stream, &network.Data_Frame{
 			Type:    network.Data_Ping,
@@ -103,21 +100,21 @@ func (s *Agent) handler(stream network.Service_StreamServer, frame *network.Data
 }
 
 // for async ipc
-func (s *Agent) Send(msg network.RawMessage) {
-	ackdata, err := s.msgParser.Serialize(msg)
-	var data *network.Data_Frame
-	if err != nil {
-		data = Services.NewSInError(err)
-	} else {
-		data = &network.Data_Frame{
-			Type:    network.Data_Message,
-			Message: ackdata,
-		}
-	}
-	s.sess.MQ <- *data
-}
+//func (s *Agent) Send(msg network.RawMessage, mq chan network.Data_Frame) {
+//	ackdata, err := s.msgParser.Serialize(msg)
+//	var data *network.Data_Frame
+//	if err != nil {
+//		data = Services.NewSInError(err)
+//	} else {
+//		data = &network.Data_Frame{
+//			Type:    network.Data_Message,
+//			Message: ackdata,
+//		}
+//	}
+//	mq <- *data
+//}
 
-func (s *Agent) dohandler(data []byte) *network.Data_Frame {
+func (s *Agent) dohandler(data []byte, sess *Session) *network.Data_Frame {
 	ret, err := s.msgParser.Deserialize(data)
 	if err != nil {
 		return Services.NewSInError(err)
@@ -126,7 +123,7 @@ func (s *Agent) dohandler(data []byte) *network.Data_Frame {
 		if err != nil {
 			return nil
 		}
-		ack := s.ackhandler(hand([]interface{}{ret, s.sess}))
+		ack := s.ackhandler(hand([]interface{}{ret, sess}))
 		if ack != nil {
 			ackdata, erra := s.msgParser.Serialize(ack.(network.RawMessage))
 			if erra != nil {
