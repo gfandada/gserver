@@ -123,12 +123,14 @@ func (s *Agent) dohandler(data []byte, sess *Session) *network.Data_Frame {
 		if err != nil {
 			return nil
 		}
+		logger.Debug("user %d recv %v", sess.UserId, *ret)
 		ack := s.ackhandler(hand([]interface{}{ret, sess}))
 		if ack != nil {
 			ackdata, erra := s.msgParser.Serialize(ack.(network.RawMessage))
 			if erra != nil {
 				return Services.NewSInError(err)
 			}
+			logger.Debug("user %d ack %v", sess.UserId, ack)
 			return &network.Data_Frame{
 				Type:    network.Data_Message,
 				Message: ackdata,

@@ -3,6 +3,7 @@ package service
 import (
 	"sync"
 
+	"github.com/gfandada/gserver/logger"
 	"github.com/gfandada/gserver/network"
 	Services "github.com/gfandada/gserver/services"
 )
@@ -114,6 +115,7 @@ func Send(id int32, msg network.RawMessage) {
 		}
 	}
 	sess.MQ <- *data
+	logger.Debug("user %d push %v", sess.UserId, msg)
 }
 
 func Count() int {
