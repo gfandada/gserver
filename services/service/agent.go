@@ -75,6 +75,22 @@ func (s *Agent) send(stream network.Service_StreamServer, frame *network.Data_Fr
 	return stream.Send(frame)
 }
 
+// FIXME for async ipc
+func (s *Agent) Send(userid int32, msg network.RawMessage, mq chan network.Data_Frame) {
+	ackdata, err := s.msgParser.Serialize(msg)
+	var data *network.Data_Frame
+	if err != nil {
+		data = Services.NewSInError(err)
+	} else {
+		data = &network.Data_Frame{
+			Type:    network.Data_Message,
+			Message: ackdata,
+		}
+	}
+	mq <- *data
+	logger.Debug("user %d push %v", userid, msg)
+}
+
 func (s *Agent) handler(stream network.Service_StreamServer, frame *network.Data_Frame, sess *Session) error {
 	defer func() {
 		if r := recover(); r != nil {
@@ -97,22 +113,6 @@ func (s *Agent) handler(stream network.Service_StreamServer, frame *network.Data
 	default:
 		return ERROR_INCORRECT_FRAME_TYPE
 	}
-}
-
-// FIXME for async ipc
-func (s *Agent) Send(userid int32, msg network.RawMessage, mq chan network.Data_Frame) {
-	ackdata, err := s.msgParser.Serialize(msg)
-	var data *network.Data_Frame
-	if err != nil {
-		data = Services.NewSInError(err)
-	} else {
-		data = &network.Data_Frame{
-			Type:    network.Data_Message,
-			Message: ackdata,
-		}
-	}
-	mq <- *data
-	logger.Debug("user %d push %v", userid, msg)
 }
 
 func (s *Agent) dohandler(data []byte, sess *Session) *network.Data_Frame {
