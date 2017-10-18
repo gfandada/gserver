@@ -99,20 +99,21 @@ func (s *Agent) handler(stream network.Service_StreamServer, frame *network.Data
 	}
 }
 
-// for async ipc
-//func (s *Agent) Send(msg network.RawMessage, mq chan network.Data_Frame) {
-//	ackdata, err := s.msgParser.Serialize(msg)
-//	var data *network.Data_Frame
-//	if err != nil {
-//		data = Services.NewSInError(err)
-//	} else {
-//		data = &network.Data_Frame{
-//			Type:    network.Data_Message,
-//			Message: ackdata,
-//		}
-//	}
-//	mq <- *data
-//}
+// FIXME for async ipc
+func (s *Agent) Send(userid int32, msg network.RawMessage, mq chan network.Data_Frame) {
+	ackdata, err := s.msgParser.Serialize(msg)
+	var data *network.Data_Frame
+	if err != nil {
+		data = Services.NewSInError(err)
+	} else {
+		data = &network.Data_Frame{
+			Type:    network.Data_Message,
+			Message: ackdata,
+		}
+	}
+	mq <- *data
+	logger.Debug("user %d push %v", userid, msg)
+}
 
 func (s *Agent) dohandler(data []byte, sess *Session) *network.Data_Frame {
 	ret, err := s.msgParser.Deserialize(data)
