@@ -2,6 +2,8 @@
 package gateway
 
 import (
+	"github.com/gfandada/gserver/logger"
+	"github.com/gfandada/gserver/misc"
 	"github.com/gfandada/gserver/network"
 )
 
@@ -42,10 +44,14 @@ func (gtc *gatesend) run() {
 }
 
 func (gtc *gatesend) raw_send(data []byte) {
+	temp := data
 	msg, err := gtc.config.Parser.Write(data)
+	reader := misc.Reader(temp)
+	id, _ := reader.ReadU16()
 	if err == nil {
 		// FIXME ignore failed
-		gtc.conn.WriteMsg(msg)
+		err = gtc.conn.WriteMsg(msg)
+		logger.Debug("send msgid %d to %v err %v", id, gtc.conn.RemoteAddr(), err)
 	}
 }
 
