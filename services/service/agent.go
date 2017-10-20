@@ -27,7 +27,7 @@ type Agent struct {
 
 func (s *Agent) Stream(stream network.Service_StreamServer) error {
 	sess := New(s.msgParser)
-	in := startRecver(stream, sess.Die)
+	in := startRecver(stream, sess)
 	defer func() {
 		Remove(sess.UserId)
 		close(sess.Die)
