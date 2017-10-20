@@ -2,8 +2,9 @@
 package gateway
 
 import (
+	"encoding/binary"
+
 	"github.com/gfandada/gserver/logger"
-	"github.com/gfandada/gserver/misc"
 	"github.com/gfandada/gserver/network"
 )
 
@@ -44,14 +45,13 @@ func (gtc *gatesend) run() {
 }
 
 func (gtc *gatesend) raw_send(data []byte) {
-	temp := data
 	msg, err := gtc.config.Parser.Write(data)
-	reader := misc.Reader(temp)
-	id, _ := reader.ReadU16()
+	// FIXME for debug
+	id := binary.BigEndian.Uint16(data)
 	if err == nil {
 		// FIXME ignore failed
 		err = gtc.conn.WriteMsg(msg)
-		logger.Debug("send msgid %d to %v err %v", id, gtc.conn.RemoteAddr(), err)
+		logger.Debug("send msgid %d to %v data %v err %v", id, gtc.conn.RemoteAddr(), msg, err)
 	}
 }
 
