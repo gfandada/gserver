@@ -79,7 +79,9 @@ func (msgParser *MessageParser) Write(data []byte) ([]byte, error) {
 		return nil, errors.New("data is too short")
 	}
 	size := uint16(len(data))
-	buff := msgParser.buff
+	//buff := msgParser.buff
+	// FIXME 容易产生内存碎片，后续优化
+	buff := make([]byte, 2+size)
 	if size-2 >= msgParser.minMessageLen && size-2 <= msgParser.maxMessageLen {
 		binary.BigEndian.PutUint16(buff, uint16(size))
 		copy(buff[2:], data)
