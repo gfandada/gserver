@@ -11,11 +11,12 @@ type Coord float32
 
 // 位置
 type Vector3 struct {
-	X  Coord
-	Y  Coord
-	Z  Coord
-	VX Coord // 速度X
-	VZ Coord // 速度Z
+	X    Coord
+	Y    Coord
+	Z    Coord
+	VX   Coord // 速度X
+	VZ   Coord // 速度Z
+	TIME int64 // 时间戳：ms
 }
 
 // AOI
@@ -43,17 +44,20 @@ func (p Vector3) DistanceTo(o Vector3) Coord {
 
 // p-o
 func (p Vector3) Sub(o Vector3) Vector3 {
-	return Vector3{p.X - o.X, p.Y - o.Y, p.Z - o.Z, p.VX - o.VX, p.VZ - o.VZ}
+	return Vector3{p.X - o.X, p.Y - o.Y, p.Z - o.Z, p.VX - o.VX, p.VZ - o.VZ,
+		p.TIME - o.TIME}
 }
 
 // p+o
 func (p Vector3) Add(o Vector3) Vector3 {
-	return Vector3{p.X + o.X, p.Y + o.Y, p.Z + o.Z, p.VX + o.VX, p.VZ + o.VZ}
+	return Vector3{p.X + o.X, p.Y + o.Y, p.Z + o.Z, p.VX + o.VX, p.VZ + o.VZ,
+		p.TIME + o.TIME}
 }
 
 // p*m
 func (p Vector3) Mul(m Coord) Vector3 {
-	return Vector3{p.X * m, p.Y * m, p.Z * m, p.VX * m, p.VZ * m}
+	return Vector3{p.X * m, p.Y * m, p.Z * m, p.VX * m, p.VZ * m,
+		p.TIME * int64(m)}
 }
 
 func (p *Vector3) Normalize() {
