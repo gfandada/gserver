@@ -16,11 +16,11 @@ go get github.com/go-sql-driver/mysql
 ### TODO
 current version is v0.8.3  
 next version-v0.9.0 will focus on:  
-1.optimize safe -- ING 
+1.optimize safe -- ING   
 2.optimize microservice   
-3.add inner logger -- ING 
-4.add tcp gateway -- DONE  
-5.add game util package(aoi,space,entity....) -- ING 
+3.add inner logger -- ING   
+4.add tcp gateway -- DONE   
+5.add game util package(aoi,space,entity....) -- ING   
 ### CONF
 ```
 更全的配置请查看demo工程
