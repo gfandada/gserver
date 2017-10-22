@@ -10,5 +10,5 @@ type Ientity interface {
 	OnEnterSpace()             // 进入space
 	OnLeaveSpace(space *Space) // 离开space
 	IsPersistent() bool        // 是否需要数据持久化
-	Flag() int                 // 获取标识
+	Flag() int32               // 获取标识
 }

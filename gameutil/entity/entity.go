@@ -172,6 +172,6 @@ func (e *Entity) IsPersistent() bool {
 	return false
 }
 
-func (e *Entity) Flag() int {
-	return NEUTRAL_FLAG
+func (e *Entity) Flag() int32 {
+	return 0
 }

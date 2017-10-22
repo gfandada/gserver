@@ -9,6 +9,7 @@ import (
 	"github.com/gfandada/gserver/util"
 )
 
+// 一万个可行走点测试aoi
 const (
 	X = 100
 	Y = 0
@@ -48,9 +49,6 @@ func Test_space(t *testing.T) {
 		}
 		for key := range space.entities {
 			fmt.Println("我是", key.aoi.pos, key.Desc.Name, "我有", len(key.Neighbors()), "个邻居")
-			for key1 := range key.Neighbors() {
-				fmt.Println("我的邻居有", key1.Desc.Name, "我们距离是", key.DistanceTo(key1))
-			}
 		}
 	}
 }
