@@ -3,6 +3,7 @@ package gserver
 
 import (
 	DB "github.com/gfandada/gserver/db"
+	LOADER "github.com/gfandada/gserver/loader"
 	Logger "github.com/gfandada/gserver/logger"
 	Module "github.com/gfandada/gserver/module"
 	Network "github.com/gfandada/gserver/network"
@@ -65,4 +66,11 @@ func RegisterHandler(list []*Services.MsgHandler) {
 func RunMysqlService(log, path string) {
 	Logger.Start(log)
 	DB.NewMysql(path)
+}
+
+// 启动xlsx加载器
+// @params log:日志配置 path:xlsx目录
+func RunXlsxService(log, path string) {
+	Logger.Start(log)
+	LOADER.Init(path)
 }

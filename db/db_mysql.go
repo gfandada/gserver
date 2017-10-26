@@ -43,6 +43,7 @@ func NewMysql(path string) {
 	}
 	_mysql.SetMaxIdleConns(cfg.MaxIdleConns)
 	_mysql.SetMaxOpenConns(cfg.MaxOpenConns)
+	logger.Info("mysql start {%s}", dataSourceName)
 	return
 }
 
@@ -51,6 +52,7 @@ func CloseMysql() {
 		return
 	}
 	_mysql.Close()
+	logger.Info("mysql close")
 }
 
 // 获取一个mysql实例

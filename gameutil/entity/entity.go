@@ -14,6 +14,7 @@ type Entity struct {
 	Destroyed bool        // 销毁标记:true-已销毁
 	Client    *GameClient // 网络对象
 	aoi       aoi         // aoi描述数据
+	Att       *EntityAtt  // 属性
 }
 
 func NewEntity(desc *EntityDesc) *Entity {
@@ -22,6 +23,7 @@ func NewEntity(desc *EntityDesc) *Entity {
 		Desc:      desc,
 		Destroyed: false,
 		Client:    new(GameClient),
+		Att:       new(EntityAtt),
 	}
 	initAOI(&e.aoi)
 	return e
@@ -140,6 +142,16 @@ func (e *Entity) Post(users []*Entity, msg interface{}) {
 		}
 	}()
 	go e.Client.Post(users, msg)
+}
+
+/*********************************与att属性交互********************************/
+
+func (e *Entity) Decrease(key string, value float32) float32 {
+	return e.Att.decrease(key, value)
+}
+
+func (e *Entity) Increase(key string, value float32) float32 {
+	return e.Att.increase(key, value)
 }
 
 /*********************************实现Ientity接口********************************/

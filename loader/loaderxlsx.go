@@ -70,28 +70,28 @@ func (c *configs) initXlsx(name string) {
 	}
 	for _, sheet := range xlFile.Sheets {
 		// 第1行是字段名
-		fileds := sheet.Rows[1]
+		fileds := sheet.Rows[2]
 		// 第2行是字段类型
-		filedsType := sheet.Rows[2]
+		filedsType := sheet.Rows[1]
 		table := new(table)
 		table.name = sheet.Name
 		table.data = make(map[uint32]*rows)
 		// 接下来是数值
-		for i := 3; i < len(sheet.Rows); i++ {
+		for i := 4; i < len(sheet.Rows); i++ {
 			// 行数据
 			rowData := new(rows)
 			rowData.records = make(map[string]interface{})
 			// 内置的行数据
 			rowData.records["inner_row"] = sheet.Rows[i].Cells
-			for j, v := range sheet.Rows[i].Cells {
+			for j := 0; j < len(sheet.Rows[i].Cells); j++ {
 				c.typeAndField(rowData.records,
 					fileds.Cells[j].String(),
 					filedsType.Cells[j].String(),
-					v)
+					sheet.Rows[i].Cells[j])
 			}
 			if len(sheet.Rows[i].Cells) > 0 {
 				// 写表数据
-				key, _ := strconv.ParseInt(sheet.Rows[i].Cells[0].String(), 10, 64)
+				key, _ := strconv.ParseInt(sheet.Rows[i].Cells[1].String(), 10, 64)
 				if key != 0 {
 					table.data[uint32(key)] = rowData
 				}
@@ -110,7 +110,7 @@ func (c *configs) typeAndField(rowData map[string]interface{}, filedName string,
 	}
 	var value interface{}
 	switch fieldType {
-	case "uint32":
+	case "int32":
 		ret, err := strconv.ParseInt(fieldVlaue.String(), 10, 64)
 		if err != nil {
 			logger.Error("typeAndField err filedName %s fieldType %s filedValue %s",
@@ -187,7 +187,7 @@ func (l *Loader) GetTableLen(table string) (int, error) {
 }
 
 // 获取表的行数据
-// @params table 		表名
+// @params table 表名
 func (l *Loader) GetTableRow(table string, row uint32) (interface{}, error) {
 	table1, ok := dataConfig.tables[table]
 	if !ok {

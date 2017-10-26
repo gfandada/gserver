@@ -122,7 +122,7 @@ func (server *LocalTimerServer) UpdateJobTimeout(job Ijob, timeout time.Duration
 	server.JobList.Delete(item)
 	item.ActionTime = now.Add(timeout)
 	server.JobList.Insert(item)
-	logger.Debug("UpdateJobTimeout job %v newTimeout %v", job, timeout)
+	//logger.Debug("UpdateJobTimeout job %v newTimeout %v", job, timeout)
 	return true
 }
 
@@ -133,7 +133,7 @@ func (server *LocalTimerServer) AddJobWithInterval(timeout time.Duration, jobFun
 	}
 	server.pause()
 	defer server.resume()
-	logger.Debug("AddJobWithInterval timeout %v args %v", timeout, args)
+	//logger.Debug("AddJobWithInterval timeout %v args %v", timeout, args)
 	return server.addJob(time.Now(), timeout, 1, jobFunc, args)
 }
 
@@ -146,7 +146,7 @@ func (server *LocalTimerServer) AddJobWithDeadtime(deadtime time.Time, jobFunc M
 	}
 	server.pause()
 	defer server.resume()
-	logger.Debug("AddJobWithDeadtime deadtime %v args %v", deadtime, args)
+	//logger.Debug("AddJobWithDeadtime deadtime %v args %v", deadtime, args)
 	return server.addJob(now, timeout, 1, jobFunc, args)
 }
 
@@ -157,7 +157,7 @@ func (server *LocalTimerServer) AddJobRepeat(jobInterval time.Duration, times ui
 	}
 	server.pause()
 	defer server.resume()
-	logger.Debug("AddJobRepeat jobInterval %v count %d args %v", jobInterval, times, args)
+	//logger.Debug("AddJobRepeat jobInterval %v count %d args %v", jobInterval, times, args)
 	return server.addJob(time.Now(), jobInterval, times, jobFunc, args)
 }
 
@@ -173,7 +173,7 @@ func (server *LocalTimerServer) DelJob(job Ijob) bool {
 		return false
 	}
 	server.removeJob(item)
-	logger.Debug("DelJob %v", job)
+	//logger.Debug("DelJob %v", job)
 	return true
 }
 
@@ -188,7 +188,7 @@ func (server *LocalTimerServer) DelJobs(jobs []Ijob) {
 		}
 		server.removeJob(item)
 	}
-	logger.Debug("DelJobs %v", jobs)
+	//logger.Debug("DelJobs %v", jobs)
 }
 
 // 获取server当前执行次数
@@ -311,7 +311,7 @@ func (job *Job) action() {
 			logger.Error("gentimer Exec job %v error: %v", job, err)
 		}
 	}()
-	logger.Debug("start action job %v ", job)
+	//logger.Debug("start action job %v ", job)
 	job.JobHandler(job.Args)
 }
 

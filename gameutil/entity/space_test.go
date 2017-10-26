@@ -40,7 +40,7 @@ func Test_space(t *testing.T) {
 		for key := range space.entities {
 			x := util.RandInterval(0, X-1)
 			z := util.RandInterval(0, Z-1)
-			fmt.Println("调度时的随机坐标", x, ":", z)
+			//fmt.Println("调度时的随机坐标", x, ":", z)
 			key.MoveSpace(Vector3{
 				X: Coord(x),
 				Y: Coord(0),
