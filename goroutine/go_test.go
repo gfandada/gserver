@@ -55,7 +55,7 @@ func Test_go(t *testing.T) {
 		}
 	}
 	go mul()
-	time.Sleep(1e9)
+	time.Sleep(2e9)
 	if err := StopById(pid); err != nil {
 		t.Error(err)
 		return

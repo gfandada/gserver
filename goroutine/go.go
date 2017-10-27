@@ -60,7 +60,7 @@ func Start(igo Igo) (pid uint64, err error) {
 			}
 		}
 	} else {
-		timer := time.After(timeD)
+		timer := time.NewTimer(timeD)
 		loop = func() {
 			pid, v = initGo(igo)
 			done <- pid
@@ -72,8 +72,9 @@ func Start(igo Igo) (pid uint64, err error) {
 						break
 					}
 					handler(igo, input)
-				case <-timer:
-					timer = time.After(igo.Timer())
+				case <-timer.C:
+					//timer = time.After(igo.Timer())
+					timer.Reset(igo.Timer())
 					timer_work(igo)
 				case <-v.chanControl:
 					return
