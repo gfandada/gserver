@@ -16,14 +16,14 @@ type gaterecv struct {
 	in            <-chan []byte
 	out           *gatesend
 	config        *network.Config
-	one_min_timer <-chan time.Time
+	one_min_timer *time.Timer
 	router        *router
 }
 
 func (gr *gaterecv) run() {
 	sess := gr.sess
 	out := gr.out
-	one_min_timer := time.After(time.Minute)
+	one_min_timer := time.NewTimer(time.Minute)
 	defer func() {
 		close(sess.Die)
 		if sess.Stream != nil {
@@ -44,7 +44,8 @@ func (gr *gaterecv) run() {
 			case network.Data_Kick:
 				sess.Flag |= SESS_AUTHFAILED
 			}
-		case <-one_min_timer:
+		case <-one_min_timer.C:
+			one_min_timer.Reset(time.Minute)
 			gr.one_timer_work()
 		case <-sess.Die:
 			sess.Flag |= SESS_AUTHFAILED
@@ -84,7 +85,6 @@ func (gr *gaterecv) clientToGate(data []byte) {
 func (gr *gaterecv) one_timer_work() {
 	defer func() {
 		gr.sess.PacketCountOneMin = 0
-		gr.one_min_timer = time.After(time.Minute)
 	}()
 	if gr.sess.PacketCountOneMin > gr.config.Rpm {
 		gr.sess.Flag |= SESS_AUTHFAILED
@@ -114,14 +114,12 @@ func startRecver(sess *Session, in <-chan []byte, out *gatesend, config *network
 	sess.MQ = make(chan network.Data_Frame, config.AsyncMQ)
 	sess.ConnectTime = time.Now()
 	sess.LastPacketTime = time.Now()
-	one_min_timer := time.After(time.Minute)
 	gr := &gaterecv{
-		sess:          sess,
-		in:            in,
-		out:           out,
-		config:        config,
-		one_min_timer: one_min_timer,
-		router:        startRouter(sess, config),
+		sess:   sess,
+		in:     in,
+		out:    out,
+		config: config,
+		router: startRouter(sess, config),
 	}
 	go gr.run()
 	return gr
