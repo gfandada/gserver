@@ -23,7 +23,9 @@ func NewEntity(desc *EntityDesc) *Entity {
 		Desc:      desc,
 		Destroyed: false,
 		Client:    new(GameClient),
-		Att:       new(EntityAtt),
+		Att: &EntityAtt{
+			att: make(map[string]float32),
+		},
 	}
 	initAOI(&e.aoi)
 	return e
