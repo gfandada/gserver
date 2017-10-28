@@ -128,6 +128,30 @@ func (c *configs) typeAndField(rowData map[string]interface{}, filedName string,
 		value = value1
 	case "string":
 		value = fieldVlaue.String()
+	case "float":
+		value1, err := fieldVlaue.Float()
+		if err != nil {
+			logger.Error("typeAndField err filedName %s fieldType %s filedValue %s",
+				filedName, fieldType, fieldVlaue.String())
+			return
+		}
+		value = value1
+	case "float32":
+		value1, err := fieldVlaue.Float()
+		if err != nil {
+			logger.Error("typeAndField err filedName %s fieldType %s filedValue %s",
+				filedName, fieldType, fieldVlaue.String())
+			return
+		}
+		value = value1
+	case "float64":
+		value1, err := fieldVlaue.Float()
+		if err != nil {
+			logger.Error("typeAndField err filedName %s fieldType %s filedValue %s",
+				filedName, fieldType, fieldVlaue.String())
+			return
+		}
+		value = value1
 	}
 	rowData[filedName] = value
 	return
@@ -223,4 +247,16 @@ func (l *Loader) GetString(data interface{}, err error) (string, error) {
 		return data.(string), nil
 	}
 	return "", fmt.Errorf("data not string")
+}
+
+// 数据类型转换
+func (l *Loader) GetFloat64(data interface{}, err error) (float64, error) {
+	if err != nil {
+		return 0.0, err
+	}
+	switch data.(type) {
+	case float64:
+		return data.(float64), nil
+	}
+	return 0.0, fmt.Errorf("data not float64")
 }
