@@ -17,17 +17,26 @@ type Entity struct {
 	Att       *EntityAtt  // 属性
 }
 
-func NewEntity(desc *EntityDesc) *Entity {
+// 新建一个实体
+// @params flag:实体类型 name:实体名称 useAOI:是否具有aoi属性 persistent:是否需要持久化
+func NewEntity(flag int32, name string, useAOI, persistent bool) *Entity {
 	e := &Entity{
-		Id:        EntityId(util.NewV4().String()),
-		Desc:      desc,
+		Id: EntityId(util.NewV4().String()),
+		Desc: &EntityDesc{
+			Name:       name,
+			UseAOI:     useAOI,
+			Persistent: persistent,
+			Flag:       flag,
+		},
 		Destroyed: false,
 		Client:    new(GameClient),
 		Att: &EntityAtt{
 			att: make(map[string]float32),
 		},
 	}
-	initAOI(&e.aoi)
+	if useAOI {
+		initAOI(&e.aoi)
+	}
 	return e
 }
 
