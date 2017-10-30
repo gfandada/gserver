@@ -32,7 +32,7 @@ func (agent *Agent) Start(conn network.Iconn) {
 	}
 	for {
 		conn.SetReadDeadline(time.Now().Add(time.Duration(config.ReadDeadline) * time.Second))
-		conn.SetWriteDeadline(time.Now().Add(time.Duration(config.WriteDeadline) * time.Second))
+		//conn.SetWriteDeadline(time.Now().Add(time.Duration(config.WriteDeadline) * time.Second))
 		data, err := conn.ReadMsg()
 		if err != nil {
 			return
