@@ -1,13 +1,4 @@
-// 基于xlsx的配置装载器
-// FIXME 当前版本不支持热更新，readonly
-
-// 可以读取以下的结构的xlsx sheet
-// 注释1	    注释2	注释3   	FIXME [不会解析此行]
-// 字段1    字段2    字段3    FIXME [字段1应该是个uint32的行id]
-// 值类型1   值类型2  值类型3
-// 值       值       值
-// 值       值       值
-// 值       值       值
+// no-watching
 package loader
 
 import (
