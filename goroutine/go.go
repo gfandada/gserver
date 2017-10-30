@@ -150,6 +150,36 @@ func Call(pid uint64, msg string, args []interface{}, timeout int) ([]interface{
 	}
 }
 
+// 同步请求
+// @params name:进程名称 msg:请求消息 args:消息参数 timeout:超时时间（秒）
+// @return 请求结果，错误描述
+func CallByName(name string, msg string, args []interface{}, timeout int) ([]interface{}, error) {
+	var err error
+	msgS := &message{
+		chanRecv: make(chan []interface{}, 1),
+		msg:      msg,
+		args:     args,
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = fmt.Errorf("%v", r)
+		}
+		close(msgS.chanRecv)
+	}()
+	v := QueryByName(name)
+	if v == nil {
+		err = errors.New("goroutine is not exist")
+		return nil, err
+	}
+	v.chanMsg <- msgS
+	select {
+	case ret := <-msgS.chanRecv:
+		return ret, err
+	case <-time.After(time.Duration(timeout) * time.Second):
+		return nil, errors.New("call time out")
+	}
+}
+
 // 异步请求
 // @params pid:进程id msg:请求消息 args:消息参数
 // @return 错误描述
