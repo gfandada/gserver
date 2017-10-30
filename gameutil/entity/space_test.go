@@ -22,10 +22,8 @@ func Test_space(t *testing.T) {
 	RegisterSpace(space)
 	for i := 0; i < X; i++ {
 		for j := 0; j < Z; j++ {
-			entity := NewEntity(&EntityDesc{
-				Name:   "entity" + strconv.Itoa(i) + ":" + strconv.Itoa(j),
-				UseAOI: true,
-			})
+			entity := NewEntity(1, "entity"+strconv.Itoa(i)+":"+strconv.Itoa(j),
+				true, true)
 			entity.BindIentity(new(Entity))
 			RegisterEntity(entity)
 			entity.EnterSpace(space.Id, Vector3{
