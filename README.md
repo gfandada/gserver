@@ -26,18 +26,18 @@ next version-v0.9.0 will focus on:
 ```
 更全的配置请查看demo工程
 {
-	"MaxConnNum": 2048, // 最大连接数
+	"MaxConnNum": 2048, // 最大连接数:多余的连接将不会响应
 	"PendingNum": 100,  // gateway->client异步ipc队列上限
-	"MaxMsgLen": 1024,  // client<->gateway message上限
-	"MinMsgLen": 0,     // client<->gateway message下限
-	"ReadDeadline":60,  // gateway->client读超时
-	"WriteDeadline":60, // gateway->client写超时
+	"MaxMsgLen": 1024,  // client<->gateway message上限:单位byte
+	"MinMsgLen": 0,     // client<->gateway message下限:单位byte
+	"ReadDeadline":60,  // gateway->client读超时:单位s
+	"WriteDeadline":60, // gateway->client写超时:单位s
 	"ServerAddress": "localhost:9527", // gateway地址
-	"MaxHeader":1024,   // header上限(for websocket)
-	"HttpTimeout": 10,  // http-get超时(for websocket)
+	"MaxHeader":1024,   // header上限(for websocket):单位byte
+	"HttpTimeout": 10,  // http-get超时(for websocket):单位s
 	"CertFile": "",     // for ssl
 	"KeyFile": "",      // for ssl
-	"Rpm":100,          // client->gateway流量上限/min
+	"Rpm":100,          // client->gateway流量上限:每分钟收到的报文数量上限
 	"AsyncMQ":64,       // service->gateway异步ipc队列上限
 	"GateWayIds":1999   // gateway本地路由id段(当前路由规则是简单的id分段规则)
 }
