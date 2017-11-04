@@ -1,6 +1,8 @@
 package entity
 
-import "container/heap"
+import (
+	"container/heap"
+)
 
 type Pather interface {
 	// 以自己为中心获取周围的可行走点
@@ -59,7 +61,6 @@ func Path(from, to Pather) (path []Pather, distance float64, found bool) {
 			}
 			return p, current.cost, true
 		}
-
 		for _, neighbor := range current.pather.PathNeighbors() {
 			cost := current.cost + current.pather.PathNeighborCost(neighbor)
 			neighborNode := nm.get(neighbor)

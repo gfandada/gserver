@@ -21,10 +21,10 @@ var KindRunes = map[int]rune{
 	KindPlain:    '.',
 	KindRiver:    '~',
 	KindMountain: 'M',
-	KindBlocker:  '▓',
+	KindBlocker:  'X',
 	KindFrom:     'F',
 	KindTo:       'T',
-	KindPath:     '★',
+	KindPath:     'A',
 }
 
 // 用于渲染
@@ -33,10 +33,10 @@ var RuneKinds = map[rune]int{
 	'.': KindPlain,
 	'~': KindRiver,
 	'M': KindMountain,
-	'▓': KindBlocker,
+	'X': KindBlocker,
 	'F': KindFrom,
 	'T': KindTo,
-	'★': KindPath,
+	'A': KindPath,
 }
 
 // 定义消耗
@@ -49,11 +49,13 @@ var KindCosts = map[int]float64{
 }
 
 type WayPoint struct {
-	Kind int   // 类型
-	X, Y int   // 坐标
-	W    World // 属主
+	Kind int      // 类型
+	X, Y int      // 坐标
+	Id   EntityId // 实体id
+	W    World    // 属主
 }
 
+// FIXME 忽略体积碰撞
 func (way *WayPoint) PathNeighbors() []Pather {
 	neighbors := []Pather{}
 	direction := [][]int{
