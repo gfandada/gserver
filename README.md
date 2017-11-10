@@ -5,6 +5,7 @@ The communication protocol of GateWay has supported Tcp and Websocket.
 [DEMO](https://github.com/gfandada/gserver_demo "gserver-demo") is here.  
 [LICENSE](LICENSE "Apache License 2.0") is here.
 ### Installation
+golang version 1.9.2
 go get github.com/golang/protobuf/proto  
 go get github.com/gorilla/websocket  
 go get github.com/cihub/seelog  
