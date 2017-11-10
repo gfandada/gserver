@@ -10,32 +10,24 @@ var (
 )
 
 type EntityManager struct {
-	entities map[EntityId]*Entity
-	sync.RWMutex
+	entities sync.Map
 }
 
 func init() {
-	_entitymanager = &EntityManager{
-		entities: make(map[EntityId]*Entity),
-	}
+	_entitymanager = &EntityManager{}
 }
 
 func (manager *EntityManager) put(entity *Entity) {
-	manager.Lock()
-	defer manager.Unlock()
-	manager.entities[entity.Id] = entity
+	manager.entities.Store(entity.Id, entity)
 }
 
 func (manager *EntityManager) del(entityid EntityId) {
-	manager.Lock()
-	defer manager.Unlock()
-	delete(manager.entities, entityid)
+	manager.entities.Delete(entityid)
 }
 
 func (manager *EntityManager) get(entityid EntityId) *Entity {
-	manager.RLock()
-	defer manager.RUnlock()
-	return manager.entities[entityid]
+	entity, _ := manager.entities.Load(entityid)
+	return entity.(*Entity)
 }
 
 func RegisterEntity(entity *Entity) {
