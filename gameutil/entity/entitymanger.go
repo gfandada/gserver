@@ -26,8 +26,10 @@ func (manager *EntityManager) del(entityid EntityId) {
 }
 
 func (manager *EntityManager) get(entityid EntityId) *Entity {
-	entity, _ := manager.entities.Load(entityid)
-	return entity.(*Entity)
+	if entity, ok := manager.entities.Load(entityid); ok {
+		return entity.(*Entity)
+	}
+	return nil
 }
 
 func RegisterEntity(entity *Entity) {

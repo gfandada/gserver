@@ -7,7 +7,7 @@ type SpaceId string
 type EntitySet map[*Entity]struct{}
 
 const (
-	_DEFAULT_AOI_DISTANCE = 10
+	_DEFAULT_AOI_DISTANCE = 5
 )
 
 const (

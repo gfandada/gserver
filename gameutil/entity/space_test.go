@@ -1,6 +1,7 @@
 package entity
 
 import (
+	"fmt"
 	//	"fmt"
 	//	"fmt"
 	//	"fmt"
@@ -47,8 +48,8 @@ func Test_space(t *testing.T) {
 				Z: Coord(z),
 			})
 		}
-		//		for key := range space.entities {
-		//			fmt.Println("我是", key.aoi.pos, key.Desc.Name, "我有", len(key.Neighbors()), "个邻居")
-		//		}
+		for key := range space.entities {
+			fmt.Println("我是", key.aoi.pos, key.Desc.Name, "我有", len(key.Neighbors()), "个邻居")
+		}
 	}
 }
