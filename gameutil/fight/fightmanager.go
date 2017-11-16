@@ -46,8 +46,3 @@ func CreateFight(fightid FightId, flag int) error {
 func DestroyFight(fightid FightId) error {
 	return stopFightScheduler(fightid)
 }
-
-// for default init
-func InitFight() {
-	RegisterHandler("", nil)
-}
