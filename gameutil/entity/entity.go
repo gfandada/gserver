@@ -165,6 +165,10 @@ func (e *Entity) Increase(key string, value float32) float32 {
 	return e.Att.increase(key, value)
 }
 
+func (e *Entity) GetAttr(key string) float32 {
+	return e.Att.get(key)
+}
+
 /*********************************实现Ientity接口********************************/
 
 func (e *Entity) OnInit() {

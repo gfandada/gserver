@@ -48,7 +48,7 @@ func (att *EntityAtt) decrease(key string, value float32) float32 {
 }
 
 func (att *EntityAtt) get(key string) float32 {
-	att.RLocker()
+	att.RLock()
 	defer att.RUnlock()
 	return att.att[key]
 }
