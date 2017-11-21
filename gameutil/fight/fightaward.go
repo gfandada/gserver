@@ -3,6 +3,7 @@ package fight
 import (
 	"time"
 
+	. "github.com/gfandada/gserver/gameutil/entity"
 	. "github.com/gfandada/gserver/goroutine"
 )
 
@@ -32,8 +33,17 @@ func CastFightAward(fightid FightId, msg string, args []interface{}) {
 	CastByName(NewAwardAlias(fightid), msg, args)
 }
 
+// 解析
+func ParseAwardInner(inner []interface{}) (FightId, map[EntityId][]EntityId, map[EntityId][]int) {
+	return inner[0].(FightId),
+		inner[1].(map[EntityId][]EntityId),
+		inner[2].(map[EntityId][]int)
+}
+
 type fightAward struct {
-	id FightId
+	id         FightId
+	kill       map[EntityId][]EntityId // 击杀过程(含助攻)
+	statistics map[EntityId][]int      // 统计数据:[击杀,死亡,助攻]
 }
 
 func (f *fightAward) Name() string {
@@ -45,26 +55,30 @@ func (f *fightAward) Timer() time.Duration {
 }
 
 func (f *fightAward) InitGo() {
+	f.kill = make(map[EntityId][]EntityId)
+	f.statistics = make(map[EntityId][]int)
 	if handler := GetHandler(INIT_AWARD); handler != nil {
-		handler(nil, []interface{}{})
+		handler([]interface{}{f.id, f.kill, f.statistics}, []interface{}{})
 	}
 }
 
 func (f *fightAward) CloseGo() {
 	if handler := GetHandler(CLOSE_AWARD); handler != nil {
-		handler(nil, []interface{}{})
+		handler([]interface{}{f.id, f.kill, f.statistics}, []interface{}{})
 	}
+	f.kill = nil
+	f.statistics = nil
 }
 
 func (f *fightAward) Timer_work() {
 	if handler := GetHandler(TIMER_AWARD); handler != nil {
-		handler(nil, []interface{}{})
+		handler([]interface{}{f.id, f.kill, f.statistics}, []interface{}{})
 	}
 }
 
 func (f *fightAward) Handler(msg string, args []interface{}, ret chan []interface{}) {
 	if handler := GetHandler(msg); handler != nil {
-		rets := handler(nil, args)
+		rets := handler([]interface{}{f.id, f.kill, f.statistics}, args)
 		// when rets are nil, should be return instead of timeout
 		if ret != nil {
 			ret <- rets
