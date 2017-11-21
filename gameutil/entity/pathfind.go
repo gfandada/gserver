@@ -1,7 +1,9 @@
 package entity
 
 import (
+	"encoding/csv"
 	"fmt"
+	"io/ioutil"
 	"strings"
 )
 
@@ -24,7 +26,7 @@ var KindRunes = map[int]rune{
 	KindBlocker:  'X',
 	KindFrom:     'F',
 	KindTo:       'T',
-	KindPath:     'A',
+	KindPath:     '•',
 }
 
 // 用于渲染
@@ -36,7 +38,7 @@ var RuneKinds = map[rune]int{
 	'X': KindBlocker,
 	'F': KindFrom,
 	'T': KindTo,
-	'A': KindPath,
+	'•': KindPath,
 }
 
 // 定义消耗
@@ -123,6 +125,18 @@ func (w World) FirstOfKind(kind int) *WayPoint {
 	return nil
 }
 
+func (w World) AllOfKind(kind int) []*WayPoint {
+	var points []*WayPoint
+	for _, row := range w {
+		for _, wayPoint := range row {
+			if wayPoint.Kind == kind {
+				points = append(points, wayPoint)
+			}
+		}
+	}
+	return points
+}
+
 // 获取起点
 func (w World) From() *WayPoint {
 	return w.FirstOfKind(KindFrom)
@@ -169,6 +183,37 @@ func ParseWorld(input string) World {
 	for y, row := range strings.Split(strings.TrimSpace(input), "\n") {
 		for x, raw := range row {
 			kind, ok := RuneKinds[raw]
+			if !ok {
+				kind = KindBlocker
+			}
+			w.SetWayPoint(&WayPoint{
+				Kind: kind,
+			}, x, y)
+		}
+	}
+	return w
+}
+
+// 这部分跟导出的地图数据结构相关，完全可以自定义
+var RuneKindsString = map[string]int{
+	"-1": KindPlain,
+	"29": KindBlocker,
+	"33": KindFrom,
+	"44": KindTo,
+}
+
+// 渲染世界通过csv文件
+func ParseWorldByCSV(input string) World {
+	cntb, err := ioutil.ReadFile(input)
+	if err != nil {
+		panic(err)
+	}
+	r2 := csv.NewReader(strings.NewReader(string(cntb)))
+	ss, _ := r2.ReadAll()
+	w := World{}
+	for y, row := range ss {
+		for x, raw := range row {
+			kind, ok := RuneKindsString[raw]
 			if !ok {
 				kind = KindBlocker
 			}
