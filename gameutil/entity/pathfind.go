@@ -4,6 +4,7 @@ import (
 	"encoding/csv"
 	"fmt"
 	"io/ioutil"
+	"strconv"
 	"strings"
 )
 
@@ -198,8 +199,6 @@ func ParseWorld(input string) World {
 var RuneKindsString = map[string]int{
 	"-1": KindPlain,
 	"29": KindBlocker,
-	"33": KindFrom,
-	"44": KindTo,
 }
 
 // 渲染世界通过csv文件
@@ -215,7 +214,7 @@ func ParseWorldByCSV(input string) World {
 		for x, raw := range row {
 			kind, ok := RuneKindsString[raw]
 			if !ok {
-				kind = KindBlocker
+				kind, _ = strconv.Atoi(raw)
 			}
 			w.SetWayPoint(&WayPoint{
 				Kind: kind,
