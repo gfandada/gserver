@@ -36,9 +36,9 @@ func NewDefaultSpace() *Space {
 }
 
 // 创建一场战斗
-// @params fightid:战斗id flag:战斗标识(3v3 or 5v5)
-func CreateFight(fightid FightId, flag int) error {
-	return startFightScheduler(fightid, flag)
+// @params fightid:战斗id flag:战斗标识(3v3 or 5v5) fmap:自定义的地图数据
+func CreateFight(fightid FightId, flag int, fmap IFightMap) error {
+	return startFightScheduler(fightid, flag, fmap)
 }
 
 // 销毁一场战斗

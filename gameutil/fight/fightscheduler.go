@@ -7,10 +7,11 @@ import (
 	. "github.com/gfandada/gserver/goroutine"
 )
 
-func startFightScheduler(fightid FightId, flag int) error {
+func startFightScheduler(fightid FightId, flag int, fmap IFightMap) error {
 	_, err := Start(&fightScheduler{
 		id:   fightid,
 		flag: flag,
+		data: fmap,
 	})
 	return err
 }
@@ -33,16 +34,17 @@ func CastFightScheduler(fightid FightId, msg string, args []interface{}) {
 }
 
 // 解析
-func ParseSchedulerInner(inner []interface{}) (int, FightId, *Space,
+func ParseSchedulerInner(inner []interface{}) (IFightMap, int, FightId, *Space,
 	map[*Entity]struct{}, map[*Entity]struct{}, map[*Entity]struct{},
 	*FightTimer) {
-	return inner[0].(int),
-		inner[1].(FightId),
-		inner[2].(*Space),
-		inner[3].(map[*Entity]struct{}),
+	return inner[0].(IFightMap),
+		inner[1].(int),
+		inner[2].(FightId),
+		inner[3].(*Space),
 		inner[4].(map[*Entity]struct{}),
 		inner[5].(map[*Entity]struct{}),
-		inner[6].(*FightTimer)
+		inner[6].(map[*Entity]struct{}),
+		inner[7].(*FightTimer)
 }
 
 type fightScheduler struct {
@@ -53,6 +55,7 @@ type fightScheduler struct {
 	soldiers     map[*Entity]struct{} // 小兵
 	towers       map[*Entity]struct{} // 防御塔和水晶容器
 	timer        *FightTimer          // 定时任务调度器
+	data         IFightMap            // 自定义地图数据
 }
 
 func (f *fightScheduler) Name() string {
@@ -64,6 +67,7 @@ func (f *fightScheduler) Timer() time.Duration {
 }
 
 func (f *fightScheduler) InitGo() {
+	f.data.Load()
 	f.ships = make(map[*Entity]struct{})
 	f.soldiers = make(map[*Entity]struct{})
 	f.towers = make(map[*Entity]struct{})
@@ -74,12 +78,13 @@ func (f *fightScheduler) InitGo() {
 	startFightAward(f.id)
 	startFighPost(f.id)
 	if handler := GetHandler(INIT_SCHEDULER); handler != nil {
-		handler([]interface{}{f.flag, f.id, f.defalutSpace, f.ships,
+		handler([]interface{}{f.data, f.flag, f.id, f.defalutSpace, f.ships,
 			f.soldiers, f.towers, f.timer}, []interface{}{})
 	}
 }
 
 func (f *fightScheduler) CloseGo() {
+	f.data.Unload()
 	f.timer.stop()
 	stopFightDamageCalc(f.id)
 	stopFightAward(f.id)
@@ -101,7 +106,7 @@ func (f *fightScheduler) CloseGo() {
 	f.towers = nil
 	UnRegisterSpace(f.defalutSpace.Id)
 	if handler := GetHandler(CLOSE_SCHEDULER); handler != nil {
-		handler([]interface{}{f.flag, f.id, f.defalutSpace, f.ships,
+		handler([]interface{}{f.data, f.flag, f.id, f.defalutSpace, f.ships,
 			f.soldiers, f.towers, f.timer}, []interface{}{})
 	}
 }
@@ -111,14 +116,14 @@ func (f *fightScheduler) Timer_work() {
 		return
 	}
 	if handler := GetHandler(TIMER_SCHEDULER); handler != nil {
-		handler([]interface{}{f.flag, f.id, f.defalutSpace, f.ships,
+		handler([]interface{}{f.data, f.flag, f.id, f.defalutSpace, f.ships,
 			f.soldiers, f.towers, f.timer}, []interface{}{})
 	}
 }
 
 func (f *fightScheduler) Handler(msg string, args []interface{}, ret chan []interface{}) {
 	if handler := GetHandler(msg); handler != nil {
-		rets := handler([]interface{}{f.flag, f.id, f.defalutSpace, f.ships,
+		rets := handler([]interface{}{f.data, f.flag, f.id, f.defalutSpace, f.ships,
 			f.soldiers, f.towers, f.timer}, args)
 		// when rets are nil, should be return instead of timeout
 		if ret != nil {
