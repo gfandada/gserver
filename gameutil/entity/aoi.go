@@ -38,27 +38,30 @@ func (p Vector3) String() string {
 
 // 计算p、o两个位置间的距离
 func (p Vector3) DistanceTo(o Vector3) Coord {
+	//	dx := p.X - o.X
+	//	dy := p.Y - o.Y
+	//	dz := p.Z - o.Z
+	//	return Coord(math.Sqrt(float64(dx*dx + dy*dy + dz*dz)))
 	dx := p.X - o.X
-	dy := p.Y - o.Y
 	dz := p.Z - o.Z
-	return Coord(math.Sqrt(float64(dx*dx + dy*dy + dz*dz)))
+	return Coord(math.Sqrt(float64(dx*dx + dz*dz)))
 }
 
 // p-o
 func (p Vector3) Sub(o Vector3) Vector3 {
-	return Vector3{p.X - o.X, p.Y - o.Y, p.Z - o.Z, p.VX - o.VX, p.VZ - o.VZ,
+	return Vector3{p.X - o.X, 0, p.Z - o.Z, p.VX - o.VX, p.VZ - o.VZ,
 		0, 0, 0}
 }
 
 // p+o
 func (p Vector3) Add(o Vector3) Vector3 {
-	return Vector3{p.X + o.X, p.Y + o.Y, p.Z + o.Z, p.VX + o.VX, p.VZ + o.VZ,
+	return Vector3{p.X + o.X, 0, p.Z + o.Z, p.VX + o.VX, p.VZ + o.VZ,
 		0, 0, 0}
 }
 
 // p*m
 func (p Vector3) Mul(m Coord) Vector3 {
-	return Vector3{p.X * m, p.Y * m, p.Z * m, p.VX * m, p.VZ * m,
+	return Vector3{p.X * m, 0, p.Z * m, p.VX * m, p.VZ * m,
 		0, 0, 0}
 }
 
