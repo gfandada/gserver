@@ -2,7 +2,7 @@
 This project aims to provide a solution for real-time message flow.  
 You can create GameServer or others, with gserver.  
 The communication protocol of GateWay has supported Tcp and Websocket.  
-[DEMO](https://github.com/gfandada/gserver_demo "gserver-demo") is here.  
+[DEMO(tcp-gateway and moba-service)](https://github.com/gfandada/gserver_demo "gserver-demo") is here.  
 [LICENSE](LICENSE "Apache License 2.0") is here.
 ### Installation
 golang version 1.9.2  
