@@ -1,7 +1,7 @@
 package entity
 
 import (
-	"fmt"
+	//	"fmt"
 	"testing"
 )
 
@@ -43,5 +43,5 @@ func Test_collision(t *testing.T) {
 	// 4*4=16
 	// 3*3=9
 	// 2*2=9
-	fmt.Println("=======相交的矩形========", count)
+	//fmt.Println("=======相交的矩形========", count)
 }

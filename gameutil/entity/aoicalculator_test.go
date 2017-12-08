@@ -1,7 +1,6 @@
 package entity
 
 import (
-	"fmt"
 	"math"
 	"math/rand"
 	"testing"
@@ -13,7 +12,6 @@ func init() {
 }
 
 func TestXAOIList_Insert(t *testing.T) {
-	fmt.Println("插入测试")
 	for i := 0; i < 10000; i++ {
 		N := rand.Intn(100)
 		list := newXAOIList()
@@ -25,7 +23,6 @@ func TestXAOIList_Insert(t *testing.T) {
 }
 
 func TestXAOIList_Remove(t *testing.T) {
-	fmt.Println("删除测试")
 	for i := 0; i < 10000; i++ {
 		N1 := rand.Intn(100)
 		N2 := rand.Intn(100)
@@ -47,7 +44,6 @@ func TestXAOIList_Remove(t *testing.T) {
 }
 
 func TestXAOIList_Move(t *testing.T) {
-	fmt.Println("移动测试")
 	for i := 0; i < 1000; i++ {
 		aois := []*aoi{}
 		list := newXAOIList()
@@ -69,7 +65,6 @@ func TestXAOIList_Move(t *testing.T) {
 }
 
 func TestXAOIList_Interested(t *testing.T) {
-	fmt.Println("关注区域测试")
 	for i := 0; i < 1000; i++ {
 		aois := []*aoi{}
 		list := newXAOIList()
