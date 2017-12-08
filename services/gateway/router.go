@@ -25,7 +25,7 @@ type router struct {
 func (r *router) run(sync chan struct{}) {
 	conn := Discovery.GetService("service")
 	cli := network.NewServiceClient(conn)
-	ctx := metadata.NewContext(context.Background(), metadata.New(map[string]string{"userid": fmt.Sprint(r.sess.UserId)}))
+	ctx := metadata.NewOutgoingContext(context.Background(), metadata.New(map[string]string{"userid": fmt.Sprint(r.sess.UserId)}))
 	stream, err := cli.Stream(ctx)
 	if err != nil {
 		logger.Error(fmt.Sprintf("router %v get stream error %v", r, err))
