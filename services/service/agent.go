@@ -56,7 +56,7 @@ func (s *Agent) Stream(stream network.Service_StreamServer) error {
 }
 
 func (s *Agent) getUserId(stream network.Service_StreamServer) (int32, error) {
-	md, ok := metadata.FromContext(stream.Context())
+	md, ok := metadata.FromIncomingContext(stream.Context())
 	if !ok {
 		return 0, ERROR_INCORRECT_FRAME_TYPE
 	}
