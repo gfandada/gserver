@@ -2,6 +2,7 @@
 package gserver
 
 import (
+	Conversion "github.com/gfandada/gserver/autoconversion"
 	DB "github.com/gfandada/gserver/db"
 	LOADER "github.com/gfandada/gserver/loader"
 	Logger "github.com/gfandada/gserver/logger"
@@ -73,4 +74,11 @@ func RunMysqlService(log, path string) {
 func RunXlsxService(log, path string) {
 	Logger.Start(log)
 	LOADER.Init(path)
+}
+
+// 解析配置，自动生成类型代码
+// @params src : 源目录(yml文件)
+// @params dest: 目地目录(go源文件)
+func RunConversion(src, dest string) {
+	Conversion.Conversion(src, dest)
 }

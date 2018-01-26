@@ -1,0 +1,7 @@
+login:
+ - LoginReq: [1,LoginReq,2,LoginAck]
+ - TestReq: [3,TestReq]
+ - Test1Req: [4,Test1Req,5,Test1Push]
+
+test:
+ - Test2Req: [6,Test2Req,7,Test2Ack]
