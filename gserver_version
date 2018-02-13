@@ -4,3 +4,4 @@ const version = "0.8.3"
 
 TODO
   接下来将实现部分watcher的建议，即去掉port-handler的类型强转，更便于开发者使用。同时使用工具代码替代手动register。2018/1/26已完成并上传
+  添加KCP-gateway，提供一种通用的可靠udp网关，满足移动开发的需求(3G/4G/WIFI)。
