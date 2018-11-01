@@ -16,6 +16,20 @@ import (
 
 	"github.com/gfandada/gserver/logger"
 	"github.com/gfandada/gserver/util"
+	"kubernetes/pkg/kubelet/kubeletconfig/util/log"
+)
+
+const (
+	defaultTimeOut    = 5   // 超时时间s
+	defaultMaxPending = 1e4 // pending上限
+)
+
+const (
+	genServerStartFailed  = "genserver start failed"
+	genServerNotFound     = "genserver is not found"
+	genServerHandlerPanic = "genserver handler panic"
+	genServerTimerPanic   = "genserver timer panic"
+	callTimeOut           = "call time out"
 )
 
 type Goroutine struct {
@@ -29,102 +43,54 @@ type message struct {
 	args     []interface{}      // 消息参数
 }
 
-// 新建并运行一个本地进程
+// 新建并运行一个本地服务进程
 // @params igo：进程的装载器
-// @return 携程id，错误描述
-func Start(igo Igo) (pid uint64, err error) {
+// @return 进程id，错误描述
+func Start(igo Igo) (pid string, err error) {
 	defer func() {
 		if r := recover(); r != nil {
 			err = fmt.Errorf("%v", r)
+			log.Errorf(genServerStartFailed+" %v", err)
 		}
 	}()
-	done := make(chan uint64, 1)
-	timeD := igo.Timer()
-	var loop func()
-	var v *Goroutine
-	if timeD <= 0 {
-		loop = func() {
-			pid, v = initGo(igo)
-			done <- pid
-			defer closeGo(pid, igo, v)
-			for {
-				select {
-				case input := <-v.chanMsg:
-					if input == nil {
-						break
-					}
-					handler(igo, input)
-				case <-v.chanControl:
-					return
-				}
-			}
-		}
+	done := make(chan string, 1)
+	server := NewServer()
+	if igo.SetTimer() <= 0 {
+		server.doWithNoTimer(iServer, done)
 	} else {
-		timer := time.NewTimer(timeD)
-		loop = func() {
-			pid, v = initGo(igo)
-			done <- pid
-			defer closeGo(pid, igo, v)
-			for {
-				select {
-				case input := <-v.chanMsg:
-					if input == nil {
-						break
-					}
-					handler(igo, input)
-				case <-timer.C:
-					//timer = time.After(igo.Timer())
-					timer.Reset(igo.Timer())
-					timer_work(igo)
-				case <-v.chanControl:
-					return
-				}
-			}
-		}
+		server.doWithTimer(iServer, done)
 	}
-	go loop()
 	pid = <-done
-	if pid != 0 {
-		return pid, nil
-	}
-	return 0, errors.New("create goroutine failed")
+	return pid, nil
 }
 
-// 通过id停止指定进程
-// @params id: 进程id
-func StopById(id uint64) (err error) {
+// link型服务进程
+func StartLink() {
+
+}
+
+// 停止指定进程
+// @params flag: 进程标示，可以是id也可以是别名
+func Stop(flag string) (err error) {
 	defer func() {
 		if r := recover(); r != nil {
 			err = fmt.Errorf("%v", r)
 		}
 	}()
-	v := QueryById(id)
-	if v != nil {
-		v.chanControl <- struct{}{}
+	server, errS := GetOneServer(flag)
+	if errS != nil {
+		return errS
 	}
-	return
-}
-
-// 通过别名停止指定进程
-// @params name: 进程别名
-func StopByName(name string) (err error) {
-	defer func() {
-		if r := recover(); r != nil {
-			err = fmt.Errorf("%v", r)
-		}
-	}()
-	v := QueryByName(name)
-	if v != nil {
-		v.chanControl <- struct{}{}
+	if server != nil {
+		server.chanControl <- struct{}{}
 	}
 	return
 }
 
 // 同步请求
-// @params pid:进程id msg:请求消息 args:消息参数 timeout:超时时间（秒）
+// @params flag:进程标示（id或者别名）msg:请求消息 args:消息参数 timeout:超时时间（秒）
 // @return 请求结果，错误描述
-func Call(pid uint64, msg string, args []interface{}, timeout int) ([]interface{}, error) {
-	var err error
+func Call(flag string, msg string, args []interface{}, timeout int) (retU []interface{}, err error) {
 	msgS := &message{
 		chanRecv: make(chan []interface{}, 1),
 		msg:      msg,
@@ -136,90 +102,37 @@ func Call(pid uint64, msg string, args []interface{}, timeout int) ([]interface{
 		}
 		close(msgS.chanRecv)
 	}()
-	v := QueryById(pid)
-	if v == nil {
-		err = errors.New("goroutine is not exist")
-		return nil, err
+	server, errS := GetOneServer(flag)
+	if errS != nil {
+		return nil, errS
 	}
-	v.chanMsg <- msgS
+	server.chanMsg <- msgS
+	if timeout == 0 {
+		timeout = defaultTimeOut
+	}
 	select {
 	case ret := <-msgS.chanRecv:
-		return ret, err
+		return ret, nil
 	case <-time.After(time.Duration(timeout) * time.Second):
-		return nil, errors.New("call time out")
-	}
-}
-
-// 同步请求
-// @params name:进程名称 msg:请求消息 args:消息参数 timeout:超时时间（秒）
-// @return 请求结果，错误描述
-func CallByName(name string, msg string, args []interface{}, timeout int) ([]interface{}, error) {
-	var err error
-	msgS := &message{
-		chanRecv: make(chan []interface{}, 1),
-		msg:      msg,
-		args:     args,
-	}
-	defer func() {
-		if r := recover(); r != nil {
-			err = fmt.Errorf("%v", r)
-		}
-		close(msgS.chanRecv)
-	}()
-	v := QueryByName(name)
-	if v == nil {
-		err = errors.New("goroutine is not exist")
-		return nil, err
-	}
-	v.chanMsg <- msgS
-	select {
-	case ret := <-msgS.chanRecv:
-		return ret, err
-	case <-time.After(time.Duration(timeout) * time.Second):
-		return nil, errors.New("call time out")
+		return nil, errors.New(callTimeOut)
 	}
 }
 
 // 异步请求
-// @params pid:进程id msg:请求消息 args:消息参数
+// @params flag:进程标示（id或者别名) msg:请求消息 args:消息参数
 // @return 错误描述
-func Cast(pid uint64, msg string, args []interface{}) error {
-	var err error
+func Cast(flag string, msg string, args []interface{}) (err error) {
 	defer func() {
 		if r := recover(); r != nil {
 			err = fmt.Errorf("%v", r)
 		}
 	}()
-	v := QueryById(pid)
-	if v == nil {
-		return errors.New("goroutine is not exist")
+	server, errS := GetOneServer(flag)
+	if errS != nil {
+		return errS
 	}
 	select {
-	case v.chanMsg <- &message{
-		msg:  msg,
-		args: args,
-	}:
-	default: // 默认丢包
-	}
-	return nil
-}
-
-// 异步请求
-// @params name:进程名称 msg:请求消息 args:消息参数
-// @return 错误描述
-func CastByName(name string, msg string, args []interface{}) error {
-	var err error
-	defer func() {
-		if r := recover(); r != nil {
-			err = fmt.Errorf("%v", r)
-		}
-	}()
-	v := QueryByName(name)
-	if v == nil {
-		return errors.New("goroutine is not exist")
-	}
-	select {
-	case v.chanMsg <- &message{
+	case server.chanMsg <- &message{
 		msg:  msg,
 		args: args,
 	}:
@@ -229,54 +142,123 @@ func CastByName(name string, msg string, args []interface{}) error {
 }
 
 // 获取排队消息数量
-// @params pid:进程id
+// @params flag:进程标示（id或者别名)
 // @return 排队消息数量
-func Pending(pid uint64) int {
-	v := QueryById(pid)
-	if v == nil {
+func Pending(flag string) int {
+	server, err := GetOneServer(flag)
+	if err != nil {
 		return 0
 	}
-	return len(v.chanMsg)
+	return len(server.chanMsg)
+}
+
+// 根据server标示获取server实体
+func GetOneServer(flag string) (server *Server, err error) {
+	server = QueryById(flag)
+	if server == nil {
+		server = QueryByName(flag)
+		if server == nil {
+			err = errors.New(genServerNotFound)
+			return
+		}
+	}
+	return
 }
 
 // 检查进程是否存活
-// @params pid:进程id
+// @params flag:进程标示（id或者别名)
 // @return true|false
-func IsAlive(pid uint64) bool {
-	v := QueryById(pid)
-	if v == nil {
+func IsAlive(flag string) bool {
+	_, err := GetOneServer(flag)
+	if err != nil {
 		return false
 	}
 	return true
 }
 
-func initGo(igo Igo) (uint64, *Goroutine) {
-	id := util.GetPid()
-	v := &Goroutine{
-		chanMsg:     make(chan *message, 10000),
-		chanControl: make(chan struct{}, 1),
+// 构建server结构
+func NewServer() *g {
+	return &Server{}
+}
+
+// 使用loop定时器
+func (s *Server) doWithTimer(iServer Iserver, done chan string) {
+	timer := time.NewTimer(iServer.SetTimer())
+	loop := func() {
+		pid := s.init(iServer)
+		done <- pid
+		defer s.close(pid, iServer)
+		for {
+			select {
+			case input := <-s.chanMsg:
+				if input == nil {
+					break
+				}
+				s.handler(iServer, input)
+			case <-timer.C:
+				timer.Reset(iServer.SetTimer())
+				s.timerWork(iServer)
+			case <-s.chanControl:
+				return
+			}
+		}
 	}
-	Register(id, igo.Name(), v)
-	igo.InitGo()
-	return id, v
+	go loop()
 }
 
-func closeGo(id uint64, igo Igo, v *Goroutine) {
-	Unregister(id, igo.Name())
-	close(v.chanControl)
-	close(v.chanMsg)
-	igo.CloseGo()
+// 未使用定时器
+func (s *Server) doWithNoTimer(iServer Iserver, done chan string) {
+	loop := func() {
+		pid := s.init(iServer)
+		done <- pid
+		defer s.close(pid, iServer)
+		for {
+			select {
+			case input := <-s.chanMsg:
+				if input == nil {
+					break
+				}
+				s.handler(iServer, input)
+			case <-s.chanControl:
+				return
+			}
+		}
+	}
+	go loop()
 }
 
-func handler(igo Igo, input *message) {
+func (s *Server) init(iServer Iserver) string {
+	id := uuid.New()
+	// default 10000
+	s.chanMsg = make(chan *message, defaultMaxPending)
+	s.chanControl = make(chan struct{}, 1)
+	Register(id, iServer.Name(), s)
+	iServer.Init()
+	return id
+}
+
+func (s *Server) close(id string, iServer Iserver) {
+	Unregister(id, iServer.Name())
+	close(s.chanControl)
+	close(s.chanMsg)
+	iServer.Close()
+}
+
+func (s *Server) handler(iServer Iserver, input *message) {
 	defer func() {
 		if r := recover(); r != nil {
-			logger.Error("goroutine handler panic input %v error: %v", input, r)
+			log.Warnf(genServerHandlerPanic+" input %v error: %v", input, r)
 		}
 	}()
-	igo.Handler(input.msg, input.args, input.chanRecv)
+	iServer.Handler(input.msg, input.args, input.chanRecv)
 }
 
-func timer_work(igo Igo) {
-	igo.Timer_work()
+func (s *Server) timerWork(iServer Iserver) {
+	defer func() {
+		if r := recover(); r != nil {
+			log.Warnf(genServerTimerPanic+" error: %v", r)
+		}
+	}()
+	iServer.TimerWork()
 }
+
