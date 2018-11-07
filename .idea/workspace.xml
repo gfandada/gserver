@@ -1,10 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="ChangeListManager">
-    <list default="true" id="6391eac5-4dd1-4b0d-8d1b-041e307bc00c" name="Default" comment="">
-      <change beforePath="$PROJECT_DIR$/goroutine/go.go" beforeDir="false" afterPath="$PROJECT_DIR$/goroutine/go.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/goroutine/igo.go" beforeDir="false" afterPath="$PROJECT_DIR$/goroutine/igo.go" afterDir="false" />
-    </list>
+    <list default="true" id="6391eac5-4dd1-4b0d-8d1b-041e307bc00c" name="Default" comment="" />
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
     <option name="TRACKING_ENABLED" value="true" />
     <option name="SHOW_DIALOG" value="false" />
@@ -39,8 +36,8 @@
       <file leaf-file-name="semaphore.go" pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/util/semaphore.go">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="-259">
-              <caret line="1" column="13" selection-start-line="1" selection-start-column="13" selection-end-line="1" selection-end-column="13" />
+            <state relative-caret-position="146">
+              <caret line="116" column="18" selection-start-line="116" selection-start-column="9" selection-end-line="116" selection-end-column="18" />
               <folding>
                 <element signature="e#24#61#0" expanded="true" />
               </folding>
@@ -145,9 +142,8 @@
   </component>
   <component name="ToolWindowManager">
     <frame x="0" y="0" width="1440" height="900" extended-state="0" />
-    <editor active="true" />
     <layout>
-      <window_info active="true" content_ui="combo" id="Project" order="0" visible="true" weight="0.2532189" />
+      <window_info content_ui="combo" id="Project" order="0" visible="true" weight="0.2532189" />
       <window_info anchor="bottom" id="TODO" order="6" />
       <window_info anchor="bottom" id="Event Log" order="7" side_tool="true" />
       <window_info anchor="right" id="Database" order="3" />
@@ -155,7 +151,7 @@
       <window_info anchor="bottom" id="Run" order="2" />
       <window_info anchor="bottom" id="Version Control" order="7" />
       <window_info id="Structure" order="1" side_tool="true" weight="0.25" />
-      <window_info anchor="bottom" id="Terminal" order="7" visible="true" weight="0.32969698" />
+      <window_info active="true" anchor="bottom" id="Terminal" order="7" visible="true" weight="0.32969698" />
       <window_info anchor="bottom" id="Debug" order="3" weight="0.4" />
       <window_info id="Favorites" order="2" side_tool="true" />
       <window_info anchor="right" content_ui="combo" id="Hierarchy" order="2" weight="0.25" />
@@ -216,8 +212,8 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/util/semaphore.go">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="-259">
-          <caret line="1" column="13" selection-start-line="1" selection-start-column="13" selection-end-line="1" selection-end-column="13" />
+        <state relative-caret-position="146">
+          <caret line="116" column="18" selection-start-line="116" selection-start-column="9" selection-end-line="116" selection-end-column="18" />
           <folding>
             <element signature="e#24#61#0" expanded="true" />
           </folding>
