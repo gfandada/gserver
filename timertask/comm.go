@@ -17,6 +17,6 @@ type TimerTaskManager struct {
 // 任务
 type TimerTask struct {
 	cycleNum int           // 循环次数
-	exec     TimerTaskFunc // 执行的函数
-	params   []interface{} // 参数
+	exec     TimerTaskFunc // 具体的job-action
+	params   []interface{} // 自定义参数
 }
