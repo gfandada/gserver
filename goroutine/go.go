@@ -14,7 +14,6 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/gfandada/gserver/logger"
 	"github.com/gfandada/gserver/util"
 	"kubernetes/pkg/kubelet/kubeletconfig/util/log"
 )
@@ -56,9 +55,9 @@ func Start(igo Igo) (pid string, err error) {
 	done := make(chan string, 1)
 	server := NewServer()
 	if igo.SetTimer() <= 0 {
-		server.doWithNoTimer(iServer, done)
+		server.doWithNoTimer(igo, done)
 	} else {
-		server.doWithTimer(iServer, done)
+		server.doWithTimer(igo, done)
 	}
 	pid = <-done
 	return pid, nil
@@ -153,7 +152,7 @@ func Pending(flag string) int {
 }
 
 // 根据server标示获取server实体
-func GetOneServer(flag string) (server *Server, err error) {
+func GetOneServer(flag string) (server *Goroutine, err error) {
 	server = QueryById(flag)
 	if server == nil {
 		server = QueryByName(flag)
@@ -177,12 +176,12 @@ func IsAlive(flag string) bool {
 }
 
 // 构建server结构
-func NewServer() *g {
-	return &Server{}
+func NewServer() *Goroutine {
+	return &Goroutine{}
 }
 
 // 使用loop定时器
-func (s *Server) doWithTimer(iServer Iserver, done chan string) {
+func (s *Goroutine) doWithTimer(iServer Igo, done chan string) {
 	timer := time.NewTimer(iServer.SetTimer())
 	loop := func() {
 		pid := s.init(iServer)
@@ -207,7 +206,7 @@ func (s *Server) doWithTimer(iServer Iserver, done chan string) {
 }
 
 // 未使用定时器
-func (s *Server) doWithNoTimer(iServer Iserver, done chan string) {
+func (s *Goroutine) doWithNoTimer(iServer Igo, done chan string) {
 	loop := func() {
 		pid := s.init(iServer)
 		done <- pid
@@ -227,8 +226,8 @@ func (s *Server) doWithNoTimer(iServer Iserver, done chan string) {
 	go loop()
 }
 
-func (s *Server) init(iServer Iserver) string {
-	id := uuid.New()
+func (s *Goroutine) init(iServer Igo) string {
+	id := string(util.NewV4().Bytes())
 	// default 10000
 	s.chanMsg = make(chan *message, defaultMaxPending)
 	s.chanControl = make(chan struct{}, 1)
@@ -237,28 +236,27 @@ func (s *Server) init(iServer Iserver) string {
 	return id
 }
 
-func (s *Server) close(id string, iServer Iserver) {
+func (s *Goroutine) close(id string, iServer Igo) {
 	Unregister(id, iServer.Name())
 	close(s.chanControl)
 	close(s.chanMsg)
 	iServer.Close()
 }
 
-func (s *Server) handler(iServer Iserver, input *message) {
+func (s *Goroutine) handler(iServer Igo, input *message) {
 	defer func() {
 		if r := recover(); r != nil {
-			log.Warnf(genServerHandlerPanic+" input %v error: %v", input, r)
+			log.Errorf(genServerHandlerPanic+" input %v error: %v", input, r)
 		}
 	}()
 	iServer.Handler(input.msg, input.args, input.chanRecv)
 }
 
-func (s *Server) timerWork(iServer Iserver) {
+func (s *Goroutine) timerWork(iServer Igo) {
 	defer func() {
 		if r := recover(); r != nil {
-			log.Warnf(genServerTimerPanic+" error: %v", r)
+			log.Errorf(genServerTimerPanic+" error: %v", r)
 		}
 	}()
 	iServer.TimerWork()
 }
-

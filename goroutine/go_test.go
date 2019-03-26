@@ -56,11 +56,11 @@ func Test_go(t *testing.T) {
 	}
 	go mul()
 	time.Sleep(2e9)
-	if err := StopById(pid); err != nil {
+	if err := Stop(pid); err != nil {
 		t.Error(err)
 		return
 	}
-	StopByName("calc")
+	Stop("calc")
 }
 
 /*****************************实现进程装载器********************************/
@@ -72,20 +72,20 @@ func (t *Test) Name() string {
 	return "calc"
 }
 
-func (t *Test) Timer() time.Duration {
+func (t *Test) SetTimer() time.Duration {
 	return time.Millisecond * 200
 	// return 0
 }
 
-func (t *Test) Timer_work() {
+func (t *Test) TimerWork() {
 	fmt.Println("11111111111111111111内置定时器1111111111111111111111")
 }
 
-func (t *Test) InitGo() {
+func (t *Test) Init() {
 	fmt.Println("init..............")
 }
 
-func (t *Test) CloseGo() {
+func (t *Test) Close() {
 	fmt.Println("close..............")
 }
 
