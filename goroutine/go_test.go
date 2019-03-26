@@ -8,6 +8,7 @@ import (
 
 func Test_go(t *testing.T) {
 	pid, err := Start(new(Test))
+	fmt.Printf("pid:%s err:%v\n", pid, err)
 	if err != nil {
 		t.Error(err)
 		return

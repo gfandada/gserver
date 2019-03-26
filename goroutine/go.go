@@ -53,11 +53,11 @@ func Start(igo Igo) (pid string, err error) {
 		}
 	}()
 	done := make(chan string, 1)
-	server := NewServer()
+	goroutine := NewGoroutine()
 	if igo.SetTimer() <= 0 {
-		server.doWithNoTimer(igo, done)
+		goroutine.doWithNoTimer(igo, done)
 	} else {
-		server.doWithTimer(igo, done)
+		goroutine.doWithTimer(igo, done)
 	}
 	pid = <-done
 	return pid, nil
@@ -76,12 +76,12 @@ func Stop(flag string) (err error) {
 			err = fmt.Errorf("%v", r)
 		}
 	}()
-	server, errS := GetOneServer(flag)
+	goroutine, errS := GetOneGoroutine(flag)
 	if errS != nil {
 		return errS
 	}
-	if server != nil {
-		server.chanControl <- struct{}{}
+	if goroutine != nil {
+		goroutine.chanControl <- struct{}{}
 	}
 	return
 }
@@ -101,11 +101,11 @@ func Call(flag string, msg string, args []interface{}, timeout int) (retU []inte
 		}
 		close(msgS.chanRecv)
 	}()
-	server, errS := GetOneServer(flag)
+	goroutine, errS := GetOneGoroutine(flag)
 	if errS != nil {
 		return nil, errS
 	}
-	server.chanMsg <- msgS
+	goroutine.chanMsg <- msgS
 	if timeout == 0 {
 		timeout = defaultTimeOut
 	}
@@ -126,12 +126,12 @@ func Cast(flag string, msg string, args []interface{}) (err error) {
 			err = fmt.Errorf("%v", r)
 		}
 	}()
-	server, errS := GetOneServer(flag)
+	goroutine, errS := GetOneGoroutine(flag)
 	if errS != nil {
 		return errS
 	}
 	select {
-	case server.chanMsg <- &message{
+	case goroutine.chanMsg <- &message{
 		msg:  msg,
 		args: args,
 	}:
@@ -144,19 +144,19 @@ func Cast(flag string, msg string, args []interface{}) (err error) {
 // @params flag:进程标示（id或者别名)
 // @return 排队消息数量
 func Pending(flag string) int {
-	server, err := GetOneServer(flag)
+	goroutine, err := GetOneGoroutine(flag)
 	if err != nil {
 		return 0
 	}
-	return len(server.chanMsg)
+	return len(goroutine.chanMsg)
 }
 
 // 根据server标示获取server实体
-func GetOneServer(flag string) (server *Goroutine, err error) {
-	server = QueryById(flag)
-	if server == nil {
-		server = QueryByName(flag)
-		if server == nil {
+func GetOneGoroutine(flag string) (goroutine *Goroutine, err error) {
+	goroutine = QueryById(flag)
+	if goroutine == nil {
+		goroutine = QueryByName(flag)
+		if goroutine == nil {
 			err = errors.New(genServerNotFound)
 			return
 		}
@@ -168,7 +168,7 @@ func GetOneServer(flag string) (server *Goroutine, err error) {
 // @params flag:进程标示（id或者别名)
 // @return true|false
 func IsAlive(flag string) bool {
-	_, err := GetOneServer(flag)
+	_, err := GetOneGoroutine(flag)
 	if err != nil {
 		return false
 	}
@@ -176,28 +176,28 @@ func IsAlive(flag string) bool {
 }
 
 // 构建server结构
-func NewServer() *Goroutine {
+func NewGoroutine() *Goroutine {
 	return &Goroutine{}
 }
 
 // 使用loop定时器
-func (s *Goroutine) doWithTimer(iServer Igo, done chan string) {
-	timer := time.NewTimer(iServer.SetTimer())
+func (goroutine *Goroutine) doWithTimer(igo Igo, done chan string) {
+	timer := time.NewTimer(igo.SetTimer())
 	loop := func() {
-		pid := s.init(iServer)
+		pid := goroutine.init(igo)
 		done <- pid
-		defer s.close(pid, iServer)
+		defer goroutine.close(pid, igo)
 		for {
 			select {
-			case input := <-s.chanMsg:
+			case input := <-goroutine.chanMsg:
 				if input == nil {
 					break
 				}
-				s.handler(iServer, input)
+				goroutine.handler(igo, input)
 			case <-timer.C:
-				timer.Reset(iServer.SetTimer())
-				s.timerWork(iServer)
-			case <-s.chanControl:
+				timer.Reset(igo.SetTimer())
+				goroutine.timerWork(igo)
+			case <-goroutine.chanControl:
 				return
 			}
 		}
@@ -206,19 +206,19 @@ func (s *Goroutine) doWithTimer(iServer Igo, done chan string) {
 }
 
 // 未使用定时器
-func (s *Goroutine) doWithNoTimer(iServer Igo, done chan string) {
+func (goroutine *Goroutine) doWithNoTimer(igo Igo, done chan string) {
 	loop := func() {
-		pid := s.init(iServer)
+		pid := goroutine.init(igo)
 		done <- pid
-		defer s.close(pid, iServer)
+		defer goroutine.close(pid, igo)
 		for {
 			select {
-			case input := <-s.chanMsg:
+			case input := <-goroutine.chanMsg:
 				if input == nil {
 					break
 				}
-				s.handler(iServer, input)
-			case <-s.chanControl:
+				goroutine.handler(igo, input)
+			case <-goroutine.chanControl:
 				return
 			}
 		}
@@ -226,37 +226,37 @@ func (s *Goroutine) doWithNoTimer(iServer Igo, done chan string) {
 	go loop()
 }
 
-func (s *Goroutine) init(iServer Igo) string {
-	id := string(util.NewV4().Bytes())
+func (goroutine *Goroutine) init(igo Igo) string {
+	id := util.NewV4().ToString()
 	// default 10000
-	s.chanMsg = make(chan *message, defaultMaxPending)
-	s.chanControl = make(chan struct{}, 1)
-	Register(id, iServer.Name(), s)
-	iServer.Init()
+	goroutine.chanMsg = make(chan *message, defaultMaxPending)
+	goroutine.chanControl = make(chan struct{}, 1)
+	Register(id, igo.Name(), goroutine)
+	igo.Init()
 	return id
 }
 
-func (s *Goroutine) close(id string, iServer Igo) {
-	Unregister(id, iServer.Name())
-	close(s.chanControl)
-	close(s.chanMsg)
-	iServer.Close()
+func (goroutine *Goroutine) close(id string, igo Igo) {
+	Unregister(id, igo.Name())
+	close(goroutine.chanControl)
+	close(goroutine.chanMsg)
+	igo.Close()
 }
 
-func (s *Goroutine) handler(iServer Igo, input *message) {
+func (goroutine *Goroutine) handler(igo Igo, input *message) {
 	defer func() {
 		if r := recover(); r != nil {
 			log.Errorf(genServerHandlerPanic+" input %v error: %v", input, r)
 		}
 	}()
-	iServer.Handler(input.msg, input.args, input.chanRecv)
+	igo.Handler(input.msg, input.args, input.chanRecv)
 }
 
-func (s *Goroutine) timerWork(iServer Igo) {
+func (goroutine *Goroutine) timerWork(igo Igo) {
 	defer func() {
 		if r := recover(); r != nil {
 			log.Errorf(genServerTimerPanic+" error: %v", r)
 		}
 	}()
-	iServer.TimerWork()
+	igo.TimerWork()
 }

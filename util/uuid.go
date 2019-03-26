@@ -463,3 +463,8 @@ func newFromHash(h hash.Hash, ns UUID, name string) UUID {
 
 	return u
 }
+
+// uuid toString
+func (uuid UUID) ToString()string{
+	return fmt.Sprintf("%s", uuid)
+}
