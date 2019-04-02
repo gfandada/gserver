@@ -12,10 +12,10 @@ package goroutine
 import (
 	"errors"
 	"fmt"
+	"github.com/gfandada/gserver/util"
 	"time"
 
-	"github.com/gfandada/gserver/util"
-	"kubernetes/pkg/kubelet/kubeletconfig/util/log"
+	log "github.com/gfandada/gserver/logger"
 )
 
 const (
@@ -49,7 +49,7 @@ func Start(igo Igo) (pid string, err error) {
 	defer func() {
 		if r := recover(); r != nil {
 			err = fmt.Errorf("%v", r)
-			log.Errorf(genServerStartFailed+" %v", err)
+			log.Error(genServerStartFailed+" %v", err)
 		}
 	}()
 	done := make(chan string, 1)
@@ -246,7 +246,7 @@ func (goroutine *Goroutine) close(id string, igo Igo) {
 func (goroutine *Goroutine) handler(igo Igo, input *message) {
 	defer func() {
 		if r := recover(); r != nil {
-			log.Errorf(genServerHandlerPanic+" input %v error: %v", input, r)
+			log.Error(genServerHandlerPanic+" input %v error: %v", input, r)
 		}
 	}()
 	igo.Handler(input.msg, input.args, input.chanRecv)
@@ -255,7 +255,7 @@ func (goroutine *Goroutine) handler(igo Igo, input *message) {
 func (goroutine *Goroutine) timerWork(igo Igo) {
 	defer func() {
 		if r := recover(); r != nil {
-			log.Errorf(genServerTimerPanic+" error: %v", r)
+			log.Error(genServerTimerPanic+" error: %v", r)
 		}
 	}()
 	igo.TimerWork()
