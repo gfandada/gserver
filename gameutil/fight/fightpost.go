@@ -15,20 +15,20 @@ func startFighPost(fightid FightId) error {
 }
 
 func stopFighPost(fightid FightId) error {
-	return StopByName(NewPostAlias(fightid))
+	return Stop(NewPostAlias(fightid))
 }
 
 // 同步调用
 // default timeout 1s
 // @params  fightid:战斗id  msg:消息类型  args:自定义参数
 func CallFighPost(fightid FightId, msg string, args []interface{}) ([]interface{}, error) {
-	return CallByName(NewPostAlias(fightid), msg, args, 1)
+	return Call(NewPostAlias(fightid), msg, args, 1)
 }
 
 // 异步调用
 // @params  fightid:战斗id  msg:消息类型  args:自定义参数
 func CastFighPost(fightid FightId, msg string, args []interface{}) {
-	CastByName(NewPostAlias(fightid), msg, args)
+	Cast(NewPostAlias(fightid), msg, args)
 }
 
 type fightPost struct {
@@ -40,25 +40,25 @@ func (f *fightPost) Name() string {
 	return NewPostAlias(f.id)
 }
 
-func (f *fightPost) Timer() time.Duration {
+func (f *fightPost) SetTimer() time.Duration {
 	return time.Millisecond * 0
 }
 
-func (f *fightPost) InitGo() {
+func (f *fightPost) Init() {
 	f.ships = make(map[*Entity]struct{})
 	if handler := GetHandler(INIT_POST); handler != nil {
 		handler(nil, []interface{}{})
 	}
 }
 
-func (f *fightPost) CloseGo() {
+func (f *fightPost) Close() {
 	f.ships = nil
 	if handler := GetHandler(CLOSE_POST); handler != nil {
 		handler(nil, []interface{}{})
 	}
 }
 
-func (f *fightPost) Timer_work() {
+func (f *fightPost) TimerWork() {
 	if handler := GetHandler(TIMER_POST); handler != nil {
 		handler(nil, []interface{}{})
 	}

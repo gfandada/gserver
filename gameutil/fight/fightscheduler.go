@@ -17,20 +17,20 @@ func startFightScheduler(fightid FightId, flag int, fmap IFightMap) error {
 }
 
 func stopFightScheduler(fightid FightId) error {
-	return StopByName(NewFightSchedulerAlias(fightid))
+	return Stop(NewFightSchedulerAlias(fightid))
 }
 
 // 同步调用
 // default timeout 1s
 // @params  fightid:战斗id  msg:消息类型  args:自定义参数
 func CallFightScheduler(fightid FightId, msg string, args []interface{}) ([]interface{}, error) {
-	return CallByName(NewFightSchedulerAlias(fightid), msg, args, 1)
+	return Call(NewFightSchedulerAlias(fightid), msg, args, 1)
 }
 
 // 异步调用
 // @params  fightid:战斗id  msg:消息类型  args:自定义参数
 func CastFightScheduler(fightid FightId, msg string, args []interface{}) {
-	CastByName(NewFightSchedulerAlias(fightid), msg, args)
+	Cast(NewFightSchedulerAlias(fightid), msg, args)
 }
 
 // 解析
@@ -62,11 +62,11 @@ func (f *fightScheduler) Name() string {
 	return NewFightSchedulerAlias(f.id)
 }
 
-func (f *fightScheduler) Timer() time.Duration {
+func (f *fightScheduler) SetTimer() time.Duration {
 	return time.Millisecond * 100
 }
 
-func (f *fightScheduler) InitGo() {
+func (f *fightScheduler) Init() {
 	f.data.Load()
 	f.ships = make(map[*Entity]struct{})
 	f.soldiers = make(map[*Entity]struct{})
@@ -83,7 +83,7 @@ func (f *fightScheduler) InitGo() {
 	}
 }
 
-func (f *fightScheduler) CloseGo() {
+func (f *fightScheduler) Close() {
 	f.data.Unload()
 	f.timer.stop()
 	stopFightDamageCalc(f.id)
@@ -111,7 +111,7 @@ func (f *fightScheduler) CloseGo() {
 	}
 }
 
-func (f *fightScheduler) Timer_work() {
+func (f *fightScheduler) TimerWork() {
 	if f.flag*2 != len(f.ships) {
 		return
 	}

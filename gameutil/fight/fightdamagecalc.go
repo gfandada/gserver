@@ -14,20 +14,20 @@ func startFightDamageCalc(fightid FightId) error {
 }
 
 func stopFightDamageCalc(fightid FightId) error {
-	return StopByName(NewDamageCalcAlias(fightid))
+	return Stop(NewDamageCalcAlias(fightid))
 }
 
 // 同步调用
 // default timeout 1s
 // @params  fightid:战斗id  msg:消息类型  args:自定义参数
 func CallFightDamageCalc(fightid FightId, msg string, args []interface{}) ([]interface{}, error) {
-	return CallByName(NewDamageCalcAlias(fightid), msg, args, 1)
+	return Call(NewDamageCalcAlias(fightid), msg, args, 1)
 }
 
 // 异步调用
 // @params  fightid:战斗id  msg:消息类型  args:自定义参数
 func CastFightDamageCalc(fightid FightId, msg string, args []interface{}) {
-	CastByName(NewDamageCalcAlias(fightid), msg, args)
+	Cast(NewDamageCalcAlias(fightid), msg, args)
 }
 
 // 解析
@@ -43,23 +43,23 @@ func (f *fightDamageCalc) Name() string {
 	return NewDamageCalcAlias(f.id)
 }
 
-func (f *fightDamageCalc) Timer() time.Duration {
+func (f *fightDamageCalc) SetTimer() time.Duration {
 	return time.Millisecond * 0
 }
 
-func (f *fightDamageCalc) InitGo() {
+func (f *fightDamageCalc) Init() {
 	if handler := GetHandler(INIT_DAMAGE); handler != nil {
 		handler(nil, []interface{}{})
 	}
 }
 
-func (f *fightDamageCalc) CloseGo() {
+func (f *fightDamageCalc) Close() {
 	if handler := GetHandler(CLOSE_DAMAGE); handler != nil {
 		handler(nil, []interface{}{})
 	}
 }
 
-func (f *fightDamageCalc) Timer_work() {
+func (f *fightDamageCalc) TimerWork() {
 	if handler := GetHandler(TIMER_DAMAGE); handler != nil {
 		handler([]interface{}{f.id}, []interface{}{})
 	}

@@ -17,20 +17,20 @@ func startFightAward(fightid FightId) error {
 
 // for stop
 func stopFightAward(fightid FightId) error {
-	return StopByName(NewAwardAlias(fightid))
+	return Stop(NewAwardAlias(fightid))
 }
 
 // 同步调用
 // default timeout 1s
 // @params  fightid:战斗id  msg:消息类型  args:自定义参数
 func CallFightAward(fightid FightId, msg string, args []interface{}) ([]interface{}, error) {
-	return CallByName(NewAwardAlias(fightid), msg, args, 1)
+	return Call(NewAwardAlias(fightid), msg, args, 1)
 }
 
 // 异步调用
 // @params  fightid:战斗id  msg:消息类型  args:自定义参数
 func CastFightAward(fightid FightId, msg string, args []interface{}) {
-	CastByName(NewAwardAlias(fightid), msg, args)
+	Cast(NewAwardAlias(fightid), msg, args)
 }
 
 // 解析
@@ -50,11 +50,11 @@ func (f *fightAward) Name() string {
 	return NewAwardAlias(f.id)
 }
 
-func (f *fightAward) Timer() time.Duration {
+func (f *fightAward) SetTimer() time.Duration {
 	return time.Millisecond * 0
 }
 
-func (f *fightAward) InitGo() {
+func (f *fightAward) Init() {
 	f.kill = make(map[EntityId][]EntityId)
 	f.statistics = make(map[EntityId][]int)
 	if handler := GetHandler(INIT_AWARD); handler != nil {
@@ -62,7 +62,7 @@ func (f *fightAward) InitGo() {
 	}
 }
 
-func (f *fightAward) CloseGo() {
+func (f *fightAward) Close() {
 	if handler := GetHandler(CLOSE_AWARD); handler != nil {
 		handler([]interface{}{f.id, f.kill, f.statistics}, []interface{}{})
 	}
@@ -70,7 +70,7 @@ func (f *fightAward) CloseGo() {
 	f.statistics = nil
 }
 
-func (f *fightAward) Timer_work() {
+func (f *fightAward) TimerWork() {
 	if handler := GetHandler(TIMER_AWARD); handler != nil {
 		handler([]interface{}{f.id, f.kill, f.statistics}, []interface{}{})
 	}
